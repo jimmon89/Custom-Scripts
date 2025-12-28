@@ -1,0 +1,23 @@
+#! /bin/bash
+OIFS="$IFS"
+IFS=$(echo -en "\n\b")
+
+if [ -d "$1" ]; then 
+	FOLDERS=$(find "$1" -type d -wholename "*/drive_c")
+	for F in $FOLDERS
+	do
+		rm -rf "$F/windows/Microsoft.NET"
+		rm "$F/windows/system32/mscoree.dll"
+		rm "$F/windows/syswow64/mscoree.dll"
+		rm "$F/windows/system32/openal32.dll"
+		rm "$F/windows/syswow64/openal32.dll"
+		rm "$F/windows/system32/dxva2.dll"
+		rm "$F/windows/syswow64/dxva2.dll"
+		rm "$F/windows/system32/evr.dll"
+		rm "$F/windows/syswow64/evr.dll"
+		rm "$F/windows/system32/uiautomationcore.dll"
+		rm "$F/windows/syswow64/uiautomationcore.dll"
+		sed -i.bak '/openal32/d;/dxva2/d;/evr/d;/uiautomationcore/d;/mscoree/d;/Microsoft.NET/d' "$(realpath -q "$F/../../tracked_files")"
+	done
+fi
+IFS="$OIFS"

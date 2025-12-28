@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+if [ -z "${SteamAppId+x}" ]; then
+	if [ -n "${APPID+x}" ]; then
+		export SteamAppId="$APPID"
+	elif [ -z "${APPID+x}" ]; then
+		export SteamAppId="0"
+	fi
+fi
+if [ -z "${APPID+x}" ]; then
+	if [ -n "${SteamAppId+x}" ]; then
+		export APPID="$SteamAppId"
+	fi
+fi
+if [ -z "${PROTON_DEBUG_DIR+x}" ]; then
+	export PROTON_DEBUG_DIR="$HOME/Games/__Apps__/Native-Cache"
+fi
+if [ -z "${LOG_DIR+x}" ]; then
+	export LOG_DIR="$PROTON_DEBUG_DIR/logs/$SteamAppId"
+fi
+if ! [ -d "${PROTON_DEBUG_DIR}" ]; then
+	if [ -e "${PROTON_DEBUG_DIR}" ]; then
+		rm -rfv "$PROTON_DEBUG_DIR"
+	fi
+	echo PROTON_DEBUG_DIR
+	mkdir -pv "$PROTON_DEBUG_DIR"
+fi
+if ! [ -d "${LOG_DIR}" ]; then
+	if [ -e "${LOG_DIR}" ]; then
+		rm -rfv "$LOG_DIR"
+	fi
+	echo LOG_DIR
+	mkdir -pv "$LOG_DIR"
+fi
+if [ -z "${JMN_WATCH_LOG+x}" ]; then
+	export JMN_WATCH_LOG="0"
+fi
+touch "$LOG_DIR/prep.log"
+if [ "$JMN_WATCH_LOG" = "1" ] || [ "$JMN_WATCH_LOG" = "true" ] || [ "$JMN_WATCH_LOG" = "yes" ]; then
+	echo "Watching log file at $LOG_DIR/prep.log" > "$LOG_DIR/prep.log"
+	echo "Press [CTRL+C] to stop." > "$LOG_DIR/prep.log"
+	echo "" > "$LOG_DIR/prep.log"
+	tail --silent --follow=name --lines=+1 "$LOG_DIR/prep.log" &
+fi
+environment-native-wrapped "${@}" &> "$LOG_DIR/prep.log"
+environment-unset

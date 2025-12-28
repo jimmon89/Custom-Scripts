@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+umo sync starwind-modded
+umo install starwind-modded
+momw-configurator-linux-amd64 config starwind-modded --run-navmeshtool --run-validator --verbose

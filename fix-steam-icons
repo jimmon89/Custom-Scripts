@@ -1,0 +1,278 @@
+#!/usr/bin/env bash
+shopt -s nullglob
+
+STEAM_ASSET_PATH="$HOME/.local/share/Steam/appcache/librarycache/"
+TMPFILE_PATH="/tmp/IMAGES_TO_MODIFY/"
+DESKTOP_FILE_LOCATION="$HOME/Desktop/"
+APPLICATION_FILE_LOCATION="$HOME/.local/share/applications/"
+ICON_PATH="$HOME/.local/share/icons/"
+HELP_ARGUMENT="help"
+OVERWRITE_ARGUEMENT="overwrite"
+DOWNLOAD_ARGUMENT="download"
+
+OIFS="$IFS"
+IFS=$'\n'
+FIX_INVALID_NAME='.*].*$'
+NO_MATCH_GAME_ID='^Icon[[:space:]]*=[[:space:]]*steam$'
+
+if [ "${1,,}" == "help" ] || [ "${2,,}" == "help" ] || [ "${3,,}" == "help" ]
+then
+	echo "other than $HELP_ARGUMENT, this script accepts up to two other arguments simultaneously, notably $DOWNLOAD_ARGUMENT, and $OVERWRITE_ARGUEMENT"
+	echo "however, $HELP_ARGUMENT will always print this message, and then exit without performing any other tasks"
+	echo "$DOWNLOAD_ARGUMENT when set, will download and then process icons for steam games found as .desktop files on either $DESKTOP_FILE_LOCATION or $APPLICATION_FILE_LOCATION"
+	echo "$DOWNLOAD_ARGUMENT when not set, will skip downloading icons, but those already found in $STEAM_ASSET_PATH will still be copied and then processed"
+	echo "$OVERWRITE_ARGUEMENT when set, while processing icon files found in $STEAM_ASSET_PATH will then overwrite any icons of the same name that already exist in $ICON_PATH"
+	echo "$OVERWRITE_ARGUEMENT when not set, will still process icons normally, but any icons with the same name as one that exists in $ICON_PATH will be ingored"
+	exit 0
+fi
+
+read_ids() {
+	if [ ! -h "$1" ] && ! [[ $1 =~ $FIX_INVALID_NAME ]]
+	then
+		while IFS= read -r line
+		do
+			if [[ "$line" =~ ^Exec[[:space:]]*=[[:space:]]*steam[[:space:]]*steam\:\/\/rungameid\/[0-9][0-9]*[[:space:]]*$ ]] && [[ "$line" =~ ^Exec[[:space:]]*=[[:space:]]*steam ]]
+			then
+				GAME_ID="$(echo "$line" | sed 's,^Exec[[:space:]]*=[[:space:]]*steam[[:space:]]*steam\:\/\/rungameid\/,,i')"
+				GAME_ID
+				if [[ $GAME_ID =~ ^[0-9][0-9]*[[:space:]]* ]]
+				then
+					NO_SPACE_GAME_ID="$(echo "$GAME_ID" | sed 's/[[:space:]]*//i')"
+					NO_SPACE_GAME_ID
+				fi
+			fi
+		done < "$1"
+	fi
+}
+
+download_icons() {
+	if [ -n "${NO_SPACE_GAME_ID}" ] && [[ "$NO_SPACE_GAME_ID" =~ ^[0-9][0-9]*$ ]] && ! [[ "$NO_SPACE_GAME_ID" =~ ^[[:space:]][[:space:]]*$ ]]
+	then
+		echo "Downloading icon for $NO_SPACE_GAME_ID"
+		SGDBoop "sgdb://boop/steam/${NO_SPACE_GAME_ID}-clienticon-en"
+	fi
+	
+	
+}
+
+set_icons() {
+	if [ -n "${NO_SPACE_GAME_ID}" ] && [[ "$NO_SPACE_GAME_ID" =~ ^[0-9][0-9]*$ ]] && ! [[ "$NO_SPACE_GAME_ID" =~ ^[[:space:]][[:space:]]*$ ]]
+	then
+		if [[ "$1" =~ $NO_MATCH_GAME_ID ]]
+		then
+			echo "$1 has default icon, changing it to the one for $NO_SPACE_GAME_ID"
+			sed -i "s/^Icon[[:space:]]*=[[:space:]]*steam$/Icon=steam_icon_${NO_SPACE_GAME_ID}/i" "$1"
+		else
+			echo "$1 already has the icon for $NO_SPACE_GAME_ID, skipping"
+		fi
+	fi
+	
+	
+}
+
+DESKTOP_ENTRIES=$(find "$DESKTOP_FILE_LOCATION" -name "*.desktop")
+APPLICATION_ENTRIES=$(find "$APPLICATION_FILE_LOCATION" -name "*.desktop")]
+STEAM_ASSETS=$(find "$STEAM_ASSET_PATH" -name "*_icon.*")
+
+if [ "${1,,}" == "download" ] || [ "${2,,}" == "download" ]
+then
+	for D in $DESKTOP_ENTRIES
+	do
+		read_ids "$D"
+		download_icons "$D"
+	done
+
+	for A in $APPLICATION_ENTRIES
+	do
+		read_ids "$A"
+		download_icons "$A"
+	done
+
+elif ! [ "${1,,}" == "download" ] && ! [ "${2,,}" == "download" ]
+then
+	echo "download flag not set, skipping donwload of icons..."
+elif [ "${1,,}" == "download" ] && [ "${2,,}" == "download" ]
+then
+	if ! command -v SGDBoop >/dev/null 2>&1
+	then
+		echo "ERROR: download flag set but 'SGDBoop' is missing, please disable the download flag or follow the instructions to install it at https://www.steamgriddb.com/boop"
+		exit 1
+	fi
+fi
+
+	echo "SGDBoop is missing"
+if ! command -v basename >/dev/null 2>&1
+then
+	UTIL_EXISTS="0"
+fi
+
+if ! command -v identify >/dev/null 2>&1
+then
+	UTIL_EXISTS="0"
+fi
+
+if ! command -v mogrify >/dev/null 2>&1
+then
+	UTIL_EXISTS="0"
+fi
+
+if [ "$UTIL_EXISTS" == "0" ]
+then	
+	if exists apt
+	then
+		PACKAGE_MANAGER="apt"
+	elif exists dnf
+	then
+		PACKAGE_MANAGER="dnf"
+	elif exists yum
+	then
+		PACKAGE_MANAGER="yum"
+	elif exists pacman
+	then
+		PACKAGE_MANAGER="pacman"
+	fi
+
+	echo "WARNING: Missing 'imagemagick' and/or 'coreutils', attempting to detect system package manager and then install the missing packages..."
+	case "$PACKAGE_MANAGER" in
+		"apt")
+			echo "Detected apt..."
+			sudo apt update
+			sudo apt install coreutils imagemagick
+			;;
+		"dnf")
+			echo "Detected dnf..."
+			sudo dnf upgrade
+			sudo dnf install coreutils ImageMagick
+			;;
+		"yum")
+			echo "Detected yum..."
+			sudo yum update
+			sudo yum install coreutils ImageMagick
+			;;
+		"pacman")
+			echo "Detected pacman..."
+			sudo pacman -Syu
+			sudo pacman -Sy imagemagick coreutils
+			;;
+		*)
+			echo "ERROR: Unable to detect package manager..."
+			echo "please find and install 'basename', possibly a part of 'coreutils' and, 'identify' and 'mogrify', possibly a part of 'imagemagick', according to your distributions instructions"
+			exit 1
+			;;
+	esac
+	
+	if ! command -v basename >/dev/null 2>&1
+	then
+		echo "ERROR: Still missing 'basename' and/or 'coreutils', please find the package containing it and use your system package manager to install the missing package..."
+		exit 1
+	fi
+	
+	if ! command -v identify >/dev/null 2>&1
+	then
+		echo "ERROR: Still missing 'identify' and/or 'imagemagick', please find the package containing it and use your system package manager to install the missing package..."
+		exit 1
+	fi
+	
+	if ! command -v mogrify >/dev/null 2>&1
+	then
+		echo "ERROR: Still missing 'mogrify' and/or 'imagemagick', please find the package containing it and use your system package manager to install the missing package..."
+		exit 1
+	fi
+fi
+
+mkdir -p "$TMPFILE_PATH"
+
+for S in $STEAM_ASSETS
+do
+	IMG_FORMAT="$(file -i -b "$S" | sed -e 's/;.*//')"
+	IMG_FORMAT="${IMG_FORMAT//image\//}"
+	BASENAME_NO_EXT="$(basename "${S%.*}")"
+	case "$IMG_FORMAT" in  
+		"png")
+			echo "$S is already a .png, moving to ${TMPFILE_PATH} and renaming to ${BASENAME_NO_EXT}.png"
+			cp -v -T "$S" "${TMPFILE_PATH}${BASENAME_NO_EXT}.png"
+			;; 
+		"jpeg")
+			echo "$S is a .jpg, not a .png, moving to ${TMPFILE_PATH} and converting to ${BASENAME_NO_EXT}.png"
+			cp -v -T "$S" "${TMPFILE_PATH}${BASENAME_NO_EXT}.jpg"
+			mogrify -quiet -auto-orient -format png "${TMPFILE_PATH}${BASENAME_NO_EXT}.jpg"
+			rm -v "${TMPFILE_PATH}${BASENAME_NO_EXT}.jpg"
+			;; 
+		"x-tga")
+			echo "$S is a .tga, not a .png, moving to ${TMPFILE_PATH} and converting to ${BASENAME_NO_EXT}.png"
+			cp -v -T "$S" "${TMPFILE_PATH}${BASENAME_NO_EXT}.tga"
+			mogrify -quiet -auto-orient -format png "${TMPFILE_PATH}${BASENAME_NO_EXT}.tga"
+			rm -v "${TMPFILE_PATH}${BASENAME_NO_EXT}.tga"
+			;; 
+		"vnd.microsoft.icon")
+			echo "$S is a .ico, not a .png, moving to ${TMPFILE_PATH} and converting to ${BASENAME_NO_EXT}.png"
+			cp -v -T "$S" "${TMPFILE_PATH}${BASENAME_NO_EXT}.ico"
+			mogrify -quiet -auto-orient -format png "${TMPFILE_PATH}${BASENAME_NO_EXT}.ico"
+			rm -v "${TMPFILE_PATH}${BASENAME_NO_EXT}.ico"
+			;;
+		*)
+			echo "$S has unknown image format $IMG_FORMAT"
+			;; 
+	esac
+done
+
+PNG_FILES=$(find "$TMPFILE_PATH" -name "*.png")
+for P in $PNG_FILES
+do
+	IMG_WIDTH="$(identify -format '%w' "$P")"
+	IMG_HEIGHT="$(identify -format '%h' "$P")"
+	NO_DIGIT_FILENAME="$(basename "$P" | sed "s/-[[:digit:]]\+//")"
+	NO_ICON_FILENAME="${NO_DIGIT_FILENAME//_icon/}"
+	FULL_NEW_FILENAME="steam_icon_$NO_ICON_FILENAME"
+	NEW_PATHNAME="${ICON_PATH}hicolor/${IMG_WIDTH}x${IMG_HEIGHT}/apps/"
+	FINAL_FILENAME="${NEW_PATHNAME}${FULL_NEW_FILENAME}"
+	echo "image is ${IMG_WIDTH}x${IMG_HEIGHT}"
+	if ! [ -e "$NEW_PATHNAME" ]
+	then
+		mkdir -v -p "$NEW_PATHNAME"
+	fi
+	
+	if [ "${1,,}" == "overwrite" ] || [ "${2,,}" == "overwrite" ]
+	then
+		if [ -e "$FINAL_FILENAME" ]
+		then
+			echo "$FINAL_FILENAME exists, and overwrite flag is set... moving and overwriting..."
+		elif ! [ -e "$FINAL_FILENAME" ]
+		then
+			echo "$FINAL_FILENAME does not exist... moving..."
+		fi
+		mv -v -f "$P" "$FINAL_FILENAME"
+	else
+		if [ -e "$FINAL_FILENAME" ]
+		then
+			echo "$FINAL_FILENAME exists, and overwrite flag is not set... ignoring..."
+			rm -v "$FINAL_FILENAME"
+		elif ! [ -e "$FINAL_FILENAME" ]
+		then
+			echo "$FINAL_FILENAME does not exist... moving..."
+			mv -v -n "$P" "$FINAL_FILENAME"
+		fi
+	fi
+done
+
+rmdir "$TMPFILE_PATH"
+if [ -e "$TMPFILE_PATH" ]
+then
+	rm -v -r -f "$TMPFILE_PATH"
+fi
+
+DESKTOP_ENTRIES_2=$(find "$DESKTOP_FILE_LOCATION" -name "*.desktop")
+for D2 in $DESKTOP_ENTRIES_2
+do
+	read_ids "$D2"
+	set_icons "$D2"
+done
+
+APPLICATION_ENTRIES_2=$(find "$APPLICATION_FILE_LOCATION" -name "*.desktop")]
+for A2 in $APPLICATION_ENTRIES_2
+do
+	read_ids "$A2"
+	set_icons "$A2"
+done
+
+IFS="$OIFS"

@@ -1,0 +1,32 @@
+#! /bin/bash
+OIFS="$IFS"
+IFS=$(echo -en "\n\b")
+if [ -d $1 ]; then 
+	FOLDERS=$(find $1 -type d -wholename "*/drive_c")
+	for F in $FOLDERS
+	do
+		if [ -L "$F/users" ]; then
+			unlink "$F/users"
+		fi
+		if [ -d "$F/users" ]; then
+			if [ ! -h "$F/users" ]; then
+				rm -r  "$F/users"
+			fi
+		fi
+		if ! [ -e "$F/users" ]; then
+			ln -s "/home/jimmy/Games/__Userdata__/users/" "$F/users"
+		fi
+		if [ -L "$F/windows/temp" ]; then
+			unlink "$F/windows/temp"
+		fi
+		if [ -d "$F/windows/temp" ]; then
+			if [ ! -h "$F/windows/temp" ]; then
+				rm -r "$F/windows/temp"
+			fi
+		fi
+		if ! [ -e "$F/windows/temp" ]; then
+			ln -s "/tmp/" "$F/windows/temp"
+		fi
+	done
+fi
+IFS="$OIFS"

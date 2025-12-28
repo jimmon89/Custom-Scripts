@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+umo sync total-overhaul
+umo install total-overhaul
+momw-configurator-linux-amd64 config total-overhaul --run-navmeshtool --run-validator --verbose

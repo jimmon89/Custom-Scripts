@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+clear
+echo "Watching log file at $HOME/Games/wine/prep.log"
+echo "Press [CTRL+C] to stop."
+echo ""
+tail --silent --follow=name --lines=+1 "$HOME/Games/wine/prep.log"

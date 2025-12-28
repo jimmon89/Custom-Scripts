@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+shopt -s nullglob
+OIFS="$IFS"
+IFS=$'\n'
+cd "$1" || exit
+ISOS=$(find "$1" -name "*.iso")
+for I in $ISOS
+do
+	if ! [[ "${I,,}" =~ ^.*.xiso.iso$ ]]
+	then
+		xdvdfs pack "$I"
+		rm "$I"
+	fi
+done
+IFS="$OIFS"

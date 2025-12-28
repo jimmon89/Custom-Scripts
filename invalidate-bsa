@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+shopt -s nullglob
+
+OIFS="$IFS"
+IFS=$'\n'
+
+ASSETS=$(find "$1" -name "*.bsa")
+ASSETS2=$(find "$1" -name "*.BSA")
+
+for A in $ASSETS
+do
+	NAME_NO_EXT="${A%.*}"
+	touch "${NAME_NO_EXT}.override"
+done
+
+for B in $ASSETS2
+do
+	NAME_NO_EXT2="${B%.*}"
+	touch "${NAME_NO_EXT2}.override"
+done
+
+IFS="$OIFS"

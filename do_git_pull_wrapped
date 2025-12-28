@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC3044
+pushd "${1}" || exit
+git fetch
+if [ ! -z "$2" ]; then
+    git switch "${2}"
+    echo "Switched To Branch ${2}"
+fi
+git pull --recurse-submodules --autostash
+git submodule update --init --checkout
+
+chmod -R ug+x "${1}"
+# shellcheck disable=SC3010
+[[ -f "${1}/Makefile" ]] && make
+# shellcheck disable=SC3010
+[[ -f "${1}/create_binary.sh" ]] && "${1}/create_binary.sh"
+# shellcheck disable=SC3010
+[[ -f "${1}/monobuild" ]] && "${1}/monobuild"
+chmod -R ug+x "${1}"
+# shellcheck disable=SC2164
+# shellcheck disable=SC3044
+popd
+echo -e "\e[0;92;1mDone\e[0m"

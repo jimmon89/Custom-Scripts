@@ -1,0 +1,62 @@
+#!/bin/sh
+ED_DIR="$HOME/Repos/Elite-Dangerous"
+EDMC_PLUGINS="$XDG_DATA_HOME/EDMarketConnector/plugins"
+EDMC_DIR="$ED_DIR/EDMarketConnector"
+EDMC_DATA_DIR="$XDG_DATA_HOME/EDMarketConnector"
+TMPDIR="${EDMC_DIR}/tmp"
+
+mkdir -p "${TMPDIR}"
+
+do_git_pull "$ED_DIR/edmcoverlay_for_linux"
+do_git_pull "$ED_DIR/edmcoverlay2"
+do_git_pull "$ED_DIR/edmcoverlay2-new"
+do_git_pull "$ED_DIR/BioScan"
+do_git_pull "$ED_DIR/ExploData"
+do_git_pull "$ED_DIR/NavRoute"
+do_git_pull "$ED_DIR/Pioneer"
+do_git_pull "$ED_DIR/EDMC_SpanshRouter"
+do_git_pull "$ED_DIR/EDMC-Canonn"
+do_git_pull "$ED_DIR/EDMC-Discord-Presence"
+do_git_pull "$ED_DIR/EDMC-FuelStatus"
+do_git_pull "$ED_DIR/LandingPad"
+do_git_pull "$EDMC_DIR" "stable"
+
+SOLUTION_FILES="$(find "$EDMC_PLUGINS" "$ED_DIR" -type f -name "*.sln")"
+for F in $SOLUTION_FILES
+do
+	nuget restore "$F"
+done
+mkdir -p "$EDMC_DATA_DIR"
+cd "$EDMC_DATA_DIR" || exit
+pyenv install --skip-existing "$(cat "${EDMC_DIR}/.python-version")"
+pyenv local "$(cat "${EDMC_DIR}/.python-version")"
+eval "$(pyenv init - zsh)"
+python3 -m venv Python
+
+# shellcheck source="/home/jimmy/Repos/Elite-Dangerous/EDMarketConnector/venv/bin/activate"
+# shellcheck disable=SC3046
+# shellcheck disable=SC3051
+source "$EDMC_DATA_DIR/Python/bin/activate"
+
+python3 -m pip install pip
+python3 -m pip install --upgrade pip
+python3 -m pip install playsound3
+python3 -m pip install --upgrade playsound3
+python3 -m pip install tcl
+python3 -m pip install --upgrade tcl
+python3 -m pip install tk
+python3 -m pip install --upgrade tk
+
+REQUIREMENTS_FILES="$(find "$EDMC_PLUGINS" "$ED_DIR" -type f -name "*requirements.txt")"
+for F in $REQUIREMENTS_FILES
+do
+	python3 -m pip install -r "$F"
+done
+
+chmod +x -R "$ED_DIR"
+chmod +x -R "$EDMC_PLUGINS"
+python3 EDMarketConnector.py
+
+
+
+

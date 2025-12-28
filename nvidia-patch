@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+HOME_DIR="/home/jimmy"
+SCRIPT_DIR=$HOME_DIR/Repos/Misc/nvidia-patch
+SCRIPT_PATH="$SCRIPT_DIR/patch"
+CACHE_DIR="$HOME_DIR/.cache/nvidia-patch"
+LOG_PATH="$CACHE_DIR/output.log"
+backup_path="$CACHE_DIR/backups"
+
+
+if ! [ -e "$CACHE_DIR" ]
+then
+    mkdir -p $CACHE_DIR
+elif [ -f  "$CACHE_DIR" ]
+then
+    rm "$LOG_PATH"
+fi
+
+if [ -f "$LOG_PATH" ]
+then
+    rm "$LOG_PATH"
+elif [ -d "$LOG_PATH" ]
+then
+    rm -rfv "$LOG_PATH"
+fi
+
+{
+    if [ -d "$SCRIPT_DIR" ]
+    then
+        do_git_pull "$SCRIPT_DIR" "master"
+    fi
+    sudo rm -rfv "/opt/nvidia/libnvidia-encode-backup"
+    sudo rm -rfv "/opt/nvidia/libnvidia-fbc-backup"
+    sudo bash -c "$SCRIPT_PATH.sh" -f
+    sudo bash -c "$SCRIPT_PATH-fbc.sh" -f
+    sudo rm -rfv "/opt/nvidia/libnvidia-encode-backup"
+    sudo rm -rfv "/opt/nvidia/libnvidia-fbc-backup"
+    sudo bash -c "$SCRIPT_PATH.sh"
+    sudo bash -c "$SCRIPT_PATH-fbc.sh"
+    sudo rm -rfv "/opt/nvidia/libnvidia-encode-backup"
+    sudo rm -rfv "/opt/nvidia/libnvidia-fbc-backup"
+} 2>&1 | tee "$LOG_PATH"

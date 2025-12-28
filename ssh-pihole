@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+clear
+ssh -p 22 -l jimmy 100.108.210.81

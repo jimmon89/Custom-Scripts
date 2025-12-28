@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+if [ -z "${SteamAppId+x}" ]; then
+	if [ -n "${APPID+x}" ]; then
+		export SteamAppId="$APPID"
+	elif [ -z "${APPID+x}" ]; then
+		export SteamAppId="0"
+	fi
+fi
+if [ -z "${APPID+x}" ]; then
+	if [ -n "${SteamAppId+x}" ]; then
+		export APPID="$SteamAppId"
+	fi
+fi
+if [ -z "${SDL_VIDEODRIVER+x}" ]; then
+	export SDL_VIDEODRIVER="x11"
+fi
+if [ -z "${JMN_NOPRELOAD+x}" ]; then
+	export JMN_NOPRELOAD="1"
+fi
+if [ -z "${JMN_LSFG+x}" ]; then
+	export JMN_LSFG="0"
+fi
+if [ -z "${JMN_MANGOHUD+x}" ]; then
+	export JMN_MANGOHUD="0"
+fi
+if [ -z "${JMN_ZINK+x}" ]; then
+	export JMN_ZINK="0"
+fi
+if [ "$JMN_NOPRELOAD" = "1" ] || [ "$JMN_NOPRELOAD" = "true" ] || [ "$JMN_NOPRELOAD" = "yes" ]; then
+	export LD_PRELOAD=""
+fi
+if [ "$JMN_LSFG" = "1" ] || [ "$JMN_LSFG" = "true" ] || [ "$JMN_LSFG" = "yes" ]; then
+	export LSFG_PROCESS="LSFG-VK Injected Game"
+fi
+if [ -z "${JMN_EXEC+x}" ]; then
+	if ! [ -f "$(which gamemoderun)" ] && [ -f "$(which game-performance)" ]; then
+		export JMN_EXEC=("game-performance" "$@")
+	elif [ -f "$(which gamemoderun)" ] && [ -f "$(which game-performance)" ]; then
+		export JMN_EXEC=("game-performance" "$@")
+	elif [ -f "$(which gamemoderun)" ] && ! [ -f "$(which game-performance)" ]; then
+		export JMN_EXEC=("gamemoderun" "$@")
+	elif ! [ -f "$(which gamemoderun)" ] && ! [ -f "$(which game-performance)" ]; then
+		export JMN_EXEC=("$@")
+	fi
+elif [ -n "${JMN_EXEC+x}" ]; then
+	export JMN_EXEC=("${JMN_EXEC[@]}" "$@")
+fi
+if [ "$JMN_MANGOHUD" = "1" ] || [ "$JMN_MANGOHUD" = "true" ] || [ "$JMN_MANGOHUD" = "yes" ]; then
+	export JMN_EXEC=("mangohud" "${JMN_EXEC[@]}")
+fi
+if [ "$JMN_ZINK" = "1" ] || [ "$JMN_ZINK" = "true" ] || [ "$JMN_ZINK" = "yes" ]; then
+	export __GLX_VENDOR_LIBRARY_NAME="mesa"
+	export GALLIUM_DRIVER="zink"
+	export MESA_LOADER_DRIVER_OVERRIDE="zink"
+fi
+if [ -z "${LOG_DIR+x}" ]; then
+	export LOG_DIR="$HOME/Games/__Apps__/Native-Cache/logs/$SteamAppId"
+fi
+if ! [ -d "${LOG_DIR}" ]; then
+	if [ -e "${LOG_DIR}" ]; then
+		rm -rf "$LOG_DIR"
+	fi
+	echo LOG_DIR
+	mkdir -p "$LOG_DIR"
+fi
+if [ -z "${SCRIPT_DIR+x}" ]; then
+	export SCRIPT_DIR="$HOME/Games/wine/"
+fi
+if ! [ -d "${SCRIPT_DIR}" ]; then
+	if [ -e "${SCRIPT_DIR}" ]; then
+		rm -rf "$SCRIPT_DIR"
+	fi
+	echo SCRIPT_DIR
+	mkdir -p "$SCRIPT_DIR"
+fi
+if [ -z "${__GL_SHADER_DISK_CACHE_SKIP_CLEANUP+x}" ]; then
+	export __GL_SHADER_DISK_CACHE_SKIP_CLEANUP="1"
+fi
+if [ -z "${__GL_SHADER_DISK_CACHE+x}" ]; then
+	export __GL_SHADER_DISK_CACHE="1"
+fi
+if [ -z "${__GL_THREADED_OPTIMIZATIONS+x}" ]; then
+	export __GL_THREADED_OPTIMIZATIONS="1"
+fi
+if [ -z "${RADV_PERFTEST+x}" ]; then
+	export RADV_PERFTEST="gpl"
+elif [ -n "${RADV_PERFTEST+x}" ]; then
+	export RADV_PERFTEST="${RADV_PERFTEST},gpl"
+fi
+if [ -z "${VK_ICD_FILENAMES+x}" ] && [ -z "${container+x}" ]; then
+	export VK_ICD_FILENAMES="/usr/share/vulkan/icd.d/nvidia_icd.json"
+fi
+{
+	printenv -0 | sort -f -z | tr '\0' '\n'
+} > "$LOG_DIR/environment.list"
+cp -f -s -t "$SCRIPT_DIR" "$LOG_DIR/environment.list"
+echo ""
+echo "\"Executing:\""
+echo "\"${JMN_EXEC[*]}\""
+echo ""
+"${JMN_EXEC[@]}"
+environment-unset

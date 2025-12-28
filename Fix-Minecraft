@@ -1,0 +1,10 @@
+#!/bin/bash
+if (( $EUID != 0 )); then
+	find $1 -type l -delete
+	find $1 -type d -empty -delete
+	exit
+fi
+if (( $EUID == 0 )); then
+	echo "Do not run as root"
+	exit
+fi

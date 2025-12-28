@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+killall XIVLauncher.Core
+killall ffxiv_dx11.exe
+killall Dalamud.Injecto
+killall wine-ffxiv

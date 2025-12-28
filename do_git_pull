@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+echo -e "\e[0;93;1mLaunching in terminal and waiting\e[0m"
+alacritty --hold --command do_git_pull_wrapped "$1" "$2"
+echo -e "\e[0;92;1mDone Updating ${1}\e[0m"
