@@ -17,19 +17,11 @@ fi
 if [ -z "${PROTONPATH+x}" ]; then
 	export PROTONPATH="$PROTONCOMPATPATH"
 fi
-if [ -z "${STEAM_COMPAT_INSTALL_PATH+x}" ]; then
-	export STEAM_COMPAT_INSTALL_PATH="$WINEPREFIX"
-fi
-if [ -z "${INSTALL_BASE+x}" ]; then
-	INSTALL_BASE="$(basename "$STEAM_COMPAT_INSTALL_PATH")"
-	export INSTALL_BASE
-	echo "INSTALL_BASE: $INSTALL_BASE"
-fi
 if [ -z "${SteamAppId+x}" ]; then
 	if [ -n "${APPID+x}" ]; then
 		export SteamAppId="$APPID"
 	elif [ -z "${APPID+x}" ]; then
-		export SteamAppId="0"
+		export SteamAppId="default"
 	fi
 fi
 if [ -z "${APPID+x}" ]; then
@@ -37,14 +29,29 @@ if [ -z "${APPID+x}" ]; then
 		export APPID="$SteamAppId"
 	fi
 fi
-if [ "$APPID" == 0 ]; then
+if [ -z "${STEAM_COMPAT_DATA_PATH+x}" ]; then
+	if [ -n "${WINEPREFIX+x}" ]; then
+		export STEAM_COMPAT_DATA_PATH="$WINEPREFIX"
+	elif [ -z "${WINEPREFIX+x}" ]; then
+		export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/Wine/$SteamAppId"
+	fi
+fi
+if [ -z "${WINEPREFIX+x}" ]; then
+	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH"
+fi
+if [ "$APPID" == "default" ]; then
 	export UMU_STEAM_GAME_ID="$APPID"
 	export STORE="none"
 	export GAMEID="umu-default"
-elif [ "$APPID" != 0 ]; then
+elif [ "$APPID" != "default" ]; then
 	export UMU_STEAM_GAME_ID="$APPID"
 	export STORE="steam"
 	export GAMEID="umu-$APPID"
+fi
+if [ -z "${INSTALL_BASE+x}" ]; then
+	INSTALL_BASE="$(basename "$STEAM_COMPAT_INSTALL_PATH")"
+	export INSTALL_BASE
+	echo "INSTALL_BASE: $INSTALL_BASE"
 fi
 if [ -z "${PROTON_DEBUG_DIR+x}" ]; then
 	export PROTON_DEBUG_DIR="$HOME/Games/__Apps__/Wine-Cache"
@@ -63,7 +70,10 @@ if [ -z "${VKD3D_FILTER_DEVICE_NAME}" ]; then
 	export VKD3D_FILTER_DEVICE_NAME="NVIDIA GeForce RTX 3060"
 fi
 if [ -z "${STEAM_COMPAT_DATA_PATH+x}" ]; then
-	export STEAM_COMPAT_DATA_PATH="$PROTON_DEBUG_DIR/compatdata/$SteamAppId"
+	export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/Wine/$SteamAppId"
+fi
+if [ -z "${STEAM_COMPAT_INSTALL_PATH+x}" ]; then
+	export STEAM_COMPAT_INSTALL_PATH="$STEAM_COMPAT_DATA_PATH"
 fi
 if ! [ -d "${STEAM_COMPAT_DATA_PATH}" ]; then
 	if [ -e "${STEAM_COMPAT_DATA_PATH}" ]; then
@@ -267,7 +277,7 @@ if [ -d "${PROTON_DEBUG_DIR}" ]; then
 	fi
 fi
 if [ -z "${SCRIPT_DIR+x}" ]; then
-	export SCRIPT_DIR="$HOME/Games/wine/"
+	export SCRIPT_DIR="$HOME/Games/wine"
 fi
 if ! [ -d "${SCRIPT_DIR}" ]; then
 	if [ -e "${SCRIPT_DIR}" ]; then
@@ -290,9 +300,6 @@ if ! [ -d "${PROTONLOGPATH}" ]; then
 	echo PROTONLOGPATH
 	mkdir -pv "$PROTONLOGPATH"
 fi
-if [ -z "${WINEPREFIX+x}" ]; then
-	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH/pfx"
-fi
 if ! [ -d "${WINEPREFIX}" ]; then
 	if [ -e "${WINEPREFIX}" ]; then
 		rm -rfv "$WINEPREFIX"
@@ -301,7 +308,11 @@ if ! [ -d "${WINEPREFIX}" ]; then
 	mkdir -pv "$WINEPREFIX"
 fi
 if [ -z "${STEAM_COMPAT_SHADER_PATH+x}" ]; then
-	STEAM_COMPAT_SHADER_PATH="$(realpath -q "$STEAM_COMPAT_DATA_PATH/../../shadercache/$SteamAppId")"
+	if [ "$STEAM_COMPAT_DATA_PATH" == "$HOME/Games/__Userdata__/compatdata/Wine/$SteamAppId" ]; then
+		STEAM_COMPAT_SHADER_PATH="$HOME/Games/__Apps__/Shader-Cache/Wine/$SteamAppId"
+	else
+		STEAM_COMPAT_SHADER_PATH="$(realpath -q "$STEAM_COMPAT_DATA_PATH/../../shadercache/$SteamAppId")"
+	fi
 	export STEAM_COMPAT_SHADER_PATH
 	if ! [ -d "${STEAM_COMPAT_SHADER_PATH}" ]; then
 		if [ -e "${STEAM_COMPAT_SHADER_PATH}" ]; then
@@ -417,7 +428,7 @@ if [ -d "${PROTONCOMPATPATH}" ]; then
 	export WINE_VER
 fi
 if [ -z "${DXVK_PATH+x}" ]; then
-	export DXVK_PATH="/usr/share/dxvk/"
+	export DXVK_PATH="/usr/share/dxvk"
 fi
 if [ "$JMN_NONVAPI" != "1" ] && [ "$JMN_NONVAPI" != "true" ] && [ "$JMN_NONVAPI" != "yes" ]; then
 	export PROTON_DISABLE_NVAPI="0"

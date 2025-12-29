@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 if [ -z "${PROTONCOMPATPATH+x}" ]; then
 	if [ -z "${PROTONPATH+x}" ]; then
-		export PROTONCOMPATPATH="/usr/share/steam/compatibilitytools.d/proton-ge-custom"
+		export PROTONCOMPATPATH="/opt/wine-cachyos"
 	elif [ -n "${PROTONPATH+x}" ]; then
 		export PROTONCOMPATPATH="$PROTONPATH"
 	fi
@@ -21,7 +21,7 @@ if [ -z "${SteamAppId+x}" ]; then
 	if [ -n "${APPID+x}" ]; then
 		export SteamAppId="$APPID"
 	elif [ -z "${APPID+x}" ]; then
-		export SteamAppId="0"
+		export SteamAppId="EDHM-UI"
 	fi
 fi
 if [ -z "${APPID+x}" ]; then
@@ -33,17 +33,17 @@ if [ -z "${STEAM_COMPAT_DATA_PATH+x}" ]; then
 	if [ -n "${WINEPREFIX+x}" ]; then
 		export STEAM_COMPAT_DATA_PATH="$WINEPREFIX"
 	elif [ -z "${WINEPREFIX+x}" ]; then
-		export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/Steam-Other/$SteamAppId"
+		export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/Wine/$SteamAppId"
 	fi
 fi
 if [ -z "${WINEPREFIX+x}" ]; then
 	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH"
 fi
-if [ "$APPID" == 0 ]; then
+if [ "$APPID" == "EDHM-UI" ]; then
 	export UMU_STEAM_GAME_ID="$APPID"
 	export STORE="none"
 	export GAMEID="umu-default"
-elif [ "$APPID" != 0 ]; then
+elif [ "$APPID" != "EDHM-UI" ]; then
 	export UMU_STEAM_GAME_ID="$APPID"
 	export STORE="steam"
 	export GAMEID="umu-$APPID"
@@ -54,7 +54,7 @@ if [ -z "${INSTALL_BASE+x}" ]; then
 	echo "INSTALL_BASE: $INSTALL_BASE"
 fi
 if [ -z "${PROTON_DEBUG_DIR+x}" ]; then
-	export PROTON_DEBUG_DIR="$HOME/Games/__Apps__/Proton-Cache"
+	export PROTON_DEBUG_DIR="$HOME/Games/__Apps__/Wine-Cache"
 fi
 if ! [ -d "${PROTON_DEBUG_DIR}" ]; then
 	if [ -e "${PROTON_DEBUG_DIR}" ]; then
@@ -70,7 +70,7 @@ if [ -z "${VKD3D_FILTER_DEVICE_NAME}" ]; then
 	export VKD3D_FILTER_DEVICE_NAME="NVIDIA GeForce RTX 3060"
 fi
 if [ -z "${STEAM_COMPAT_DATA_PATH+x}" ]; then
-	export STEAM_COMPAT_DATA_PATH=""$HOME/Games/__Userdata__/compatdata/Steam-Other/$SteamAppId"
+	export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/Wine/$SteamAppId"
 fi
 if [ -z "${STEAM_COMPAT_INSTALL_PATH+x}" ]; then
 	export STEAM_COMPAT_INSTALL_PATH="$STEAM_COMPAT_DATA_PATH"
@@ -308,8 +308,8 @@ if ! [ -d "${WINEPREFIX}" ]; then
 	mkdir -pv "$WINEPREFIX"
 fi
 if [ -z "${STEAM_COMPAT_SHADER_PATH+x}" ]; then
-	if [ "$STEAM_COMPAT_DATA_PATH" == "$HOME/Games/__Userdata__/compatdata/Steam-Other/$SteamAppId" ]; then
-		STEAM_COMPAT_SHADER_PATH="$HOME/Games/__Apps__/Shader-Cache/Steam-Other/$SteamAppId"
+	if [ "$STEAM_COMPAT_DATA_PATH" == "$HOME/Games/__Userdata__/compatdata/Wine/$SteamAppId" ]; then
+		STEAM_COMPAT_SHADER_PATH="$HOME/Games/__Apps__/Shader-Cache/Wine/$SteamAppId"
 	else
 		STEAM_COMPAT_SHADER_PATH="$(realpath -q "$STEAM_COMPAT_DATA_PATH/../../shadercache/$SteamAppId")"
 	fi
@@ -822,5 +822,6 @@ echo ""
 echo "\"Executing:\""
 echo "\"${JMN_EXEC[*]}\""
 echo ""
-"${JMN_EXEC[@]}"
+pushd "${WINEPREFIXDRIVEC}/users/jimmy/AppData/Local/EDHM-UI-V3" || exit
+"${WINE}" "${WINEPREFIXDRIVEC}/users/jimmy/AppData/Local/EDHM-UI-V3/EDHM-UI-V3.exe"
 environment-unset

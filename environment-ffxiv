@@ -14,8 +14,18 @@ fi
 if [ -z "${PROTON_DEBUG_DIR+x}" ]; then
 	export PROTON_DEBUG_DIR="$HOME/Games/__Apps__/Proton-Cache"
 fi
-if [ -z "${STEAM_COMPAT_INSTALL_PATH+x}" ]; then
-	export STEAM_COMPAT_INSTALL_PATH="$WINEPREFIX"
+if [ -z "${STEAM_COMPAT_DATA_PATH+x}" ]; then
+	if [ -n "${WINEPREFIX+x}" ]; then
+		export STEAM_COMPAT_DATA_PATH="$WINEPREFIX"
+	elif [ -z "${WINEPREFIX+x}" ]; then
+		export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/Steam-Other/$SteamAppId"
+	fi
+fi
+if [ -z "${WINEPREFIX+x}" ]; then
+	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH"
+fi
+if [-z "${STEAM_COMPAT_INSTALL_PATH+x}" ]; then
+	export STEAM_COMPAT_INSTALL_PATH="$STEAM_COMPAT_DATA_PATH"
 fi
 if [ -z "${INSTALL_BASE+x}" ]; then
 	INSTALL_BASE="$(basename "$STEAM_COMPAT_INSTALL_PATH")"
@@ -31,7 +41,21 @@ if [ -d "${PROTON_DEBUG_DIR}" ]; then
 	fi
 fi
 if [ -z "${SCRIPT_DIR+x}" ]; then
-	export SCRIPT_DIR="$HOME/Games/wine/"
+	export SCRIPT_DIR="$HOME/Games/wine"
+fi
+if ! [ -d "${STEAM_COMPAT_DATA_PATH}" ]; then
+	if [ -e "${STEAM_COMPAT_DATA_PATH}" ]; then
+		rm -rfv "$STEAM_COMPAT_DATA_PATH"
+	fi
+	echo STEAM_COMPAT_DATA_PATH
+	mkdir -pv "$STEAM_COMPAT_DATA_PATH"
+fi
+if ! [ -d "${WINEPREFIX}" ]; then
+	if [ -e "${WINEPREFIX}" ]; then
+		rm -rfv "$WINEPREFIX"
+	fi
+	echo WINEPREFIX
+	mkdir -pv "$WINEPREFIX"
 fi
 if ! [ -d "${SCRIPT_DIR}" ]; then
 	if [ -e "${SCRIPT_DIR}" ]; then
