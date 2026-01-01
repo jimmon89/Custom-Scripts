@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+cd "$HOME/Repos/Misc/Custom-Scripts/" || exit
+git add ./*
+git commit -m "Latest as of $(date)"
+git push
