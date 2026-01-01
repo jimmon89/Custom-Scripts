@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+export LD_PRELOAD=""
 if [ -z "${PROTONCOMPATPATH+x}" ]; then
 	if [ -z "${PROTONPATH+x}" ]; then
 		export PROTONCOMPATPATH="/opt/wine-cachyos"
@@ -48,6 +49,9 @@ elif [ "$APPID" != "EDHM-UI" ]; then
 	export STORE="steam"
 	export GAMEID="umu-$APPID"
 fi
+if [ -z "${STEAM_COMPAT_INSTALL_PATH+x}" ]; then
+	export STEAM_COMPAT_INSTALL_PATH="$STEAM_COMPAT_DATA_PATH"
+fi
 if [ -z "${INSTALL_BASE+x}" ]; then
 	INSTALL_BASE="$(basename "$STEAM_COMPAT_INSTALL_PATH")"
 	export INSTALL_BASE
@@ -68,12 +72,6 @@ if [ -z "${DXVK_FILTER_DEVICE_NAME+x}" ]; then
 fi
 if [ -z "${VKD3D_FILTER_DEVICE_NAME}" ]; then
 	export VKD3D_FILTER_DEVICE_NAME="NVIDIA GeForce RTX 3060"
-fi
-if [ -z "${STEAM_COMPAT_DATA_PATH+x}" ]; then
-	export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/Wine/$SteamAppId"
-fi
-if [ -z "${STEAM_COMPAT_INSTALL_PATH+x}" ]; then
-	export STEAM_COMPAT_INSTALL_PATH="$STEAM_COMPAT_DATA_PATH"
 fi
 if ! [ -d "${STEAM_COMPAT_DATA_PATH}" ]; then
 	if [ -e "${STEAM_COMPAT_DATA_PATH}" ]; then
@@ -97,12 +95,6 @@ if ! [ -d "$STEAM_COMPAT_BY_NAME_BASE" ]; then
 fi
 if [ -z "${SDL_VIDEODRIVER+x}" ]; then
 	export SDL_VIDEODRIVER="windows,wayland,x11"
-fi
-if [ -z "${JMN_NOPRELOAD+x}" ]; then
-	export JMN_NOPRELOAD="1"
-fi
-if [ "$JMN_NOPRELOAD" = "1" ] || [ "$JMN_NOPRELOAD" = "true" ] || [ "$JMN_NOPRELOAD" = "yes" ]; then
-	export LD_PRELOAD=":/home/jimmy/.local/share/Steam/ubuntu12_32/gameoverlayrenderer.so:/home/jimmy/.local/share/Steam/ubuntu12_64/gameoverlayrenderer.so"
 fi
 if [ -z "${JMN_LSFG+x}" ]; then
 	export JMN_LSFG="0"
@@ -145,6 +137,30 @@ if [ -z "${JMN_DECK+x}" ]; then
 fi
 if [ -z "${JMN_NOXESSUP+x}" ]; then
 	export JMN_NOXESSUP="1"
+fi
+if [ -z "${JMN_SURROUND+x}" ]; then
+	export JMN_SURROUND="0"
+fi
+if [ "$JMN_SURROUND" = "1" ] || [ "$JMN_SURROUND" = "true" ] || [ "$JMN_SURROUND" = "yes" ]; then
+	if [ -z "${WINEDLLOVERRIDES+x}" ]; then
+		export WINEDLLOVERRIDES="winepulse.drv=d"
+	elif [ -n "${WINEDLLOVERRIDES+x}" ]; then
+		export WINEDLLOVERRIDES="${WINEDLLOVERRIDES};winepulse.drv=d"
+	fi
+	export WINEALSA_CHANNELS="6"
+elif ! [ "$JMN_SURROUND" = "1" ] && ! [ "$JMN_SURROUND" = "true" ] && ! [ "$JMN_SURROUND" = "yes" ]; then
+	if [ -z "${WINEDLLOVERRIDES+x}" ]; then
+		export WINEDLLOVERRIDES="winepulse.drv=d"
+	elif [ -n "${WINEDLLOVERRIDES+x}" ]; then
+		export WINEDLLOVERRIDES="${WINEDLLOVERRIDES};winepulse.drv=d"
+	fi
+	export WINEALSA_CHANNELS="2"
+fi
+if [ -z "${JMN_SURROUND_FIX+x}" ]; then
+	export JMN_SURROUND_FIX="0"
+fi
+if [ "$JMN_SURROUND_FIX" = "1" ] || [ "$JMN_SURROUND_FIX" = "true" ] || [ "$JMN_SURROUND_FIX" = "yes" ]; then
+	export WINEALSA_SPATIAL="1"
 fi
 if [ "$JMN_NOXESSUP" = "1" ] || [ "$JMN_NOXESSUP" = "true" ] || [ "$JMN_NOXESSUP" = "yes" ]; then
 	export PROTON_XESS_UPGRADE="0"
@@ -225,13 +241,13 @@ fi
 #	export PROTON_VERB="waitforexitandrun"
 #fi
 if [ -z "${JMN_EXEC+x}" ]; then
-	if ! [ -f "$(which gamemoderun)" ] && [ -f "$(which game-performance)" ]; then
+	if ! [ -f "$(which gamemoderun 2>/dev/null)" ] && [ -f "$(which game-performance 2>/dev/null)" ]; then
 		export JMN_EXEC=("game-performance" "${@:-${@}}")
-	elif [ -f "$(which gamemoderun)" ] && [ -f "$(which game-performance)" ]; then
+	elif [ -f "$(which gamemoderun 2>/dev/null)" ] && [ -f "$(which game-performance 2>/dev/null)" ]; then
 		export JMN_EXEC=("game-performance" "${@:-${@}}")
-	elif [ -f "$(which gamemoderun)" ] && ! [ -f "$(which game-performance)" ]; then
+	elif [ -f "$(which gamemoderun 2>/dev/null)" ] && ! [ -f "$(which game-performance 2>/dev/null)" ]; then
 		export JMN_EXEC=("gamemoderun" "${@:-${@}}")
-	elif ! [ -f "$(which gamemoderun)" ] && ! [ -f "$(which game-performance)" ]; then
+	elif ! [ -f "$(which gamemoderun 2>/dev/null)" ] && ! [ -f "$(which game-performance 2>/dev/null)" ]; then
 		export JMN_EXEC=("${@:-${@}}")
 	fi
 elif [ -n "${JMN_EXEC+x}" ]; then
@@ -253,9 +269,9 @@ if [ "$JMN_DECK" = "1" ] || [ "$JMN_DECK" = "true" ] || [ "$JMN_DECK" = "yes" ];
 	export SteamDeck="1"
 fi
 if [ -z "${DXVK_CONFIG+x}" ]; then
-	export DXVK_CONFIG="d3d11.maxFeatureLevel=12_1:d3d11.samplerAnisotropy=$JMN_ANISO:d3d9.customDeviceId=2503:d3d9.customVendorId=10de:d3d9.dpiAware=True:d3d9.hideAmdGpu=Auto:d3d9.hideIntelGpu=Auto:d3d9.hideNvidiaGpu=False:d3d9.hideNvkGpu=True:d3d9.maxAvailableMemory=12160:d3d9.maxFrameRate=$JMN_FPS:d3d9.presentInterval=$JMN_VSYNC:d3d9.samplerAnisotropy=$JMN_ANISO:d3d9.shaderModel=3:dxgi.customDeviceId=2503:dxgi.customVendorId=10de:dxgi.hideAmdGpu=Auto:dxgi.hideIntelGpu=Auto:dxgi.hideNvidiaGpu=False:dxgi.hideNvkGpu=True:dxgi.maxDeviceMemory=12160:dxgi.maxFrameRate=$JMN_FPS:dxgi.syncInterval=$JMN_VSYNC:dxvk.enableAsync=true:dxvk.tearFree=Auto"
+	export DXVK_CONFIG="d3d11.maxFeatureLevel=12_1:d3d11.samplerAnisotropy=$JMN_ANISO:d3d9.customDeviceId=2503:d3d9.customVendorId=10de:d3d9.dpiAware=True:d3d9.maxAvailableMemory=12160:d3d9.maxFrameRate=$JMN_FPS:d3d9.presentInterval=$JMN_VSYNC:d3d9.samplerAnisotropy=$JMN_ANISO:d3d9.shaderModel=3:dxgi.customDeviceId=2503:dxgi.customVendorId=10de:dxgi.maxDeviceMemory=12160:dxgi.maxFrameRate=$JMN_FPS:dxgi.syncInterval=$JMN_VSYNC:dxvk.enableAsync=true:dxvk.tearFree=Auto"
 elif [ -n "${DXVK_CONFIG+x}" ]; then
-	export DXVK_CONFIG="${DXVK_CONFIG}:d3d11.maxFeatureLevel=12_1:d3d11.samplerAnisotropy=$JMN_ANISO:d3d9.customDeviceId=2503:d3d9.customVendorId=10de:d3d9.dpiAware=True:d3d9.hideAmdGpu=Auto:d3d9.hideIntelGpu=Auto:d3d9.hideNvidiaGpu=False:d3d9.hideNvkGpu=True:d3d9.maxAvailableMemory=12160:d3d9.maxFrameRate=$JMN_FPS:d3d9.presentInterval=$JMN_VSYNC:d3d9.samplerAnisotropy=$JMN_ANISO:d3d9.shaderModel=3:dxgi.customDeviceId=2503:dxgi.customVendorId=10de:dxgi.hideAmdGpu=Auto:dxgi.hideIntelGpu=Auto:dxgi.hideNvidiaGpu=False:dxgi.hideNvkGpu=True:dxgi.maxDeviceMemory=12160:dxgi.maxFrameRate=$JMN_FPS:dxgi.syncInterval=$JMN_VSYNC:dxvk.enableAsync=true:dxvk.tearFree=Auto"
+	export DXVK_CONFIG="${DXVK_CONFIG}:d3d11.maxFeatureLevel=12_1:d3d11.samplerAnisotropy=$JMN_ANISO:d3d9.customDeviceId=2503:d3d9.customVendorId=10de:d3d9.dpiAware=True:d3d9.maxAvailableMemory=12160:d3d9.maxFrameRate=$JMN_FPS:d3d9.presentInterval=$JMN_VSYNC:d3d9.samplerAnisotropy=$JMN_ANISO:d3d9.shaderModel=3:dxgi.customDeviceId=2503:dxgi.customVendorId=10de:dxgi.maxDeviceMemory=12160:dxgi.maxFrameRate=$JMN_FPS:dxgi.syncInterval=$JMN_VSYNC:dxvk.enableAsync=true:dxvk.tearFree=Auto"
 fi
 if [ -z "${VKD3D_FRAME_RATE+x}" ]; then
 	export VKD3D_FRAME_RATE="$JMN_FPS"
@@ -698,34 +714,37 @@ fixwineprefix() {
 		if [ -L "$WINEPREFIXDRIVEC/users" ]; then
 			echo "Removing Target Link \"$WINEPREFIXDRIVEC/users\""
 			unlink "$WINEPREFIXDRIVEC/users"
+			echo ""
 		fi
 		if [ -L "$WINEPREFIXDRIVEC/windows/temp" ]; then
 			echo "Removing Target Link \"$WINEPREFIXDRIVEC/windows/temp\""
 			unlink "$WINEPREFIXDRIVEC/windows/temp"
+			echo ""
 		fi
-		echo ""
 		if [ -d "$WINEPREFIXDRIVEC/users" ]; then
 			if [ ! -h "$WINEPREFIXDRIVEC/users" ]; then
 				echo "Removing Target Directory \"$WINEPREFIXDRIVEC/users\""
 				rm -rfd "$WINEPREFIXDRIVEC/users"
+				echo ""
 			fi
 		fi
 		if [ -d "$WINEPREFIXDRIVEC/windows/temp" ]; then
 			if [ ! -h "$WINEPREFIXDRIVEC/windows/temp" ]; then
 				echo "Removing Target Directory \"$WINEPREFIXDRIVEC/windows/temp\""
 				rm -rfd "$WINEPREFIXDRIVEC/windows/temp"
+				echo ""
 			fi
 		fi
-		echo ""
 		if ! [ -e "$WINEPREFIXDRIVEC/users" ]; then
 			echo "Creating Link pointing to \"$HOME/Games/__Userdata__/users/\" in \"$WINEPREFIXDRIVEC\" named \"users\""
 			ln -sfv "$HOME/Games/__Userdata__/users/" "$WINEPREFIXDRIVEC/users"
+			echo ""
 		fi
 		if ! [ -e "$WINEPREFIXDRIVEC/windows/temp" ]; then
 			echo "Creating Link pointing to \"/tmp/\" in \"$WINEPREFIXDRIVEC/windows\" named \"temp\""
 			ln -sfv "/tmp/" "$WINEPREFIXDRIVEC/windows/temp"
+			echo ""
 		fi
-		echo ""
 		echo Printing Current Wine Locations And Settings
 		echo ""
 		if [ -n "$PROTONCOMPATPATH" ]; then
@@ -738,7 +757,6 @@ fixwineprefix() {
 		elif [ -z "$WINE_PATH" ]; then
 			echo Wine Path Not Found
 		fi
-		echo ""
 		if [ -n "$WINE64" ]; then
 			echo "Wine64 Executable Is \"$WINE64\""
 		elif [ -z "$WINE64" ]; then
@@ -764,7 +782,6 @@ fixwineprefix() {
 		elif [ -z "$WINEBOOT" ]; then
 			echo Wine Boot Executable Not Found
 		fi
-		echo ""
 		if [ -n "$WINE_VER" ]; then
 			echo "Wine Version Is \"$WINE_VER\""
 		elif [ -z "$WINE_VER" ]; then
@@ -775,21 +792,14 @@ fixwineprefix() {
 		elif [ -z "$ARCH" ]; then
 			echo Wine Architecture Not Found
 		fi
-		echo ""
 		if [ "$JMN_DXVK" = "1" ] || [ "$JMN_DXVK" = "true" ] || [ "$JMN_DXVK" = "yes" ]; then
 			$WINESERVER -w
 			echo Installing DXVK
-			echo ""
 			install_dxvk d3d8
-			echo ""
 			install_dxvk d3d9
-			echo ""
 			install_dxvk d3d10core
-			echo ""
 			install_dxvk d3d11
-			echo ""
 			install_dxvk dxgi
-			echo ""
 		fi
 		if [ -e "$STEAM_COMPAT_INSTALL_PATH/x" ] && ! [ -d "$STEAM_COMPAT_INSTALL_PATH/x" ]; then
 			rm -rfv "$STEAM_COMPAT_INSTALL_PATH/x"
@@ -801,6 +811,7 @@ fixwineprefix() {
 			rm -rfv "${WINEPREFIXDRIVEC}/winestreamproxy"
 		fi
 		winetricks mimeassoc=off
+		echo ""
 		echo Installing Wine Stream Proxy
 		echo ""
 		winestreamproxy-install
@@ -809,12 +820,12 @@ fixwineprefix() {
 		echo "$WINEPREFIX:"' Not a valid wine prefix.'
 		exit 1
 	fi
+}
+if [ -e "${STEAM_COMPAT_DATA_PATH}" ] && [ -e "${WINEPREFIX}" ]; then
 	echo "Dumping Full Environment To \"$LOG_DIR/environment.list\""
 	{
 		printenv -0 | sort -f -z | tr '\0' '\n'
 	} > "$LOG_DIR/environment.list"
-}
-if [ -e "${STEAM_COMPAT_DATA_PATH}" ] && [ -e "${WINEPREFIX}" ]; then
 	fixwineprefix
 	cp -fvst "$SCRIPT_DIR" "$LOG_DIR/environment.list" "$LOG_DIR/prep.log"
 fi
@@ -823,5 +834,5 @@ echo "\"Executing:\""
 echo "\"${JMN_EXEC[*]}\""
 echo ""
 pushd "${WINEPREFIXDRIVEC}/users/jimmy/AppData/Local/EDHM-UI-V3" || exit
-"${WINE}" "${WINEPREFIXDRIVEC}/users/jimmy/AppData/Local/EDHM-UI-V3/EDHM-UI-V3.exe"
+LD_PRELOAD="/home/jimmy/.local/share/Steam/ubuntu12_32/gameoverlayrenderer.so /home/jimmy/.local/share/Steam/ubuntu12_64/gameoverlayrenderer.so" "${WINE}" "${WINEPREFIXDRIVEC}/users/jimmy/AppData/Local/EDHM-UI-V3/EDHM-UI-V3.exe"
 environment-unset

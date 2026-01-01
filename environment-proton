@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+export LD_PRELOAD=""
 if [ -z "${SteamAppId+x}" ]; then
 	if [ -n "${APPID+x}" ]; then
 		export SteamAppId="$APPID"
@@ -22,9 +23,9 @@ if [ -z "${STEAM_COMPAT_DATA_PATH+x}" ]; then
 	fi
 fi
 if [ -z "${WINEPREFIX+x}" ]; then
-	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH"
+	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH/pfx"
 fi
-if [-z "${STEAM_COMPAT_INSTALL_PATH+x}" ]; then
+if [ -z "${STEAM_COMPAT_INSTALL_PATH+x}" ]; then
 	export STEAM_COMPAT_INSTALL_PATH="$STEAM_COMPAT_DATA_PATH"
 fi
 if [ -z "${INSTALL_BASE+x}" ]; then
@@ -89,11 +90,19 @@ if [ -z "${JMN_WATCH_LOG+x}" ]; then
 	export JMN_WATCH_LOG="0"
 fi
 touch "$LOG_DIR/prep.log"
+truncate -s 0 "$LOG_DIR/prep.log"
 if [ "$JMN_WATCH_LOG" = "1" ] || [ "$JMN_WATCH_LOG" = "true" ] || [ "$JMN_WATCH_LOG" = "yes" ]; then
-	echo "Watching log file at $LOG_DIR/prep.log" > "$LOG_DIR/prep.log"
-	echo "Press [CTRL+C] to stop." > "$LOG_DIR/prep.log"
-	echo "" > "$LOG_DIR/prep.log"
-	tail --silent --follow=name --lines=+1 "$LOG_DIR/prep.log" &
+	{
+		echo "Watching log file at \"$LOG_DIR/prep.log\""
+		echo "Press [CTRL+C] to stop."
+		echo ""
+	 } >> "$LOG_DIR/prep.log"
+	alacritty --title "Game Output" --command tail --silent --follow=name --lines=+1 "$LOG_DIR/prep.log" &
 fi
-environment-proton-wrapped "${@:-${@}}" &> "$LOG_DIR/prep.log"
+environment-proton-wrapped "${@:-${@}}" &>> "$LOG_DIR/prep.log"
+sed -i "/ERROR. ld\.so. object '.home.jimmy.\.local.share.Steam..*.gameoverlayrenderer\.so' from LD_PRELOAD cannot be preloaded .wrong ELF class. .*.. ignored\./d" "$LOG_DIR/prep.log"
+sed -i "/pid .* .. .*, skipping destruction .fork without exec../d" "$LOG_DIR/prep.log"
+sed -i "/wineserver. using server.side synchronization./d" "$LOG_DIR/prep.log"
+sed -i "/Fossilize WARN. Pipeline library handle .* is not registered./d" "$LOG_DIR/prep.log"
+sed -i "/It has either not been recorded, or it failed to be recorded earlier .which is expected if application uses an extension that is not recognized by Fossilize../d" "$LOG_DIR/prep.log"
 environment-unset

@@ -1,9 +1,27 @@
 #!/usr/bin/env bash
+if [ -z "${PROTONCOMPATPATH+x}" ]; then
+	if [ -z "${PROTONPATH+x}" ]; then
+		export PROTONCOMPATPATH="/usr/share/steam/compatibilitytools.d/proton-ge-custom"
+	elif [ -n "${PROTONPATH+x}" ]; then
+		export PROTONCOMPATPATH="$PROTONPATH"
+	fi
+fi
+if [ -z "${JMN_LOCAL_PROTON+x}" ]; then
+	export JMN_LOCAL_PROTON="0"
+fi
+if [ "$JMN_LOCAL_PROTON" = "1" ] || [ "$JMN_LOCAL_PROTON" = "true" ] || [ "$JMN_LOCAL_PROTON" = "yes" ]; then
+	PROTON_VERSION="$(< "${STEAM_COMPAT_DATA_PATH}/version" sed -n 1p)"
+	export PROTON_VERSION
+	export PROTONCOMPATPATH="$HOME/.local/share/Steam/compatibilitytools.d/$PROTON_VERSION"
+fi
+if [ -z "${PROTONPATH+x}" ]; then
+	export PROTONPATH="$PROTONCOMPATPATH"
+fi
 if [ -z "${SteamAppId+x}" ]; then
 	if [ -n "${APPID+x}" ]; then
 		export SteamAppId="$APPID"
 	elif [ -z "${APPID+x}" ]; then
-		export SteamAppId="0"
+		export SteamAppId="$INST_NAME"
 	fi
 fi
 if [ -z "${APPID+x}" ]; then
@@ -11,67 +29,436 @@ if [ -z "${APPID+x}" ]; then
 		export APPID="$SteamAppId"
 	fi
 fi
-if [ -z "${SDL_VIDEODRIVER+x}" ]; then
-	export SDL_VIDEODRIVER="x11"
+if [ -z "${STEAM_COMPAT_DATA_PATH+x}" ]; then
+	if [ -n "${WINEPREFIX+x}" ]; then
+		export STEAM_COMPAT_DATA_PATH="$WINEPREFIX"
+	elif [ -z "${WINEPREFIX+x}" ]; then
+		export STEAM_COMPAT_DATA_PATH="$INST_DIR"
+	fi
 fi
-if [ -z "${JMN_NOPRELOAD+x}" ]; then
-	export JMN_NOPRELOAD="1"
+if [ -z "${WINEPREFIX+x}" ]; then
+	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH"
+fi
+if [ "$APPID" == 0 ]; then
+	export UMU_STEAM_GAME_ID="$APPID"
+	export STORE="none"
+	export GAMEID="umu-default"
+elif [ "$APPID" != 0 ]; then
+	export UMU_STEAM_GAME_ID="$APPID"
+	export STORE="steam"
+	export GAMEID="umu-$APPID"
+fi
+if [ -z "${STEAM_COMPAT_INSTALL_PATH+x}" ]; then
+	export STEAM_COMPAT_INSTALL_PATH="$STEAM_COMPAT_DATA_PATH"
+fi
+if [ -z "${INSTALL_BASE+x}" ]; then
+	INSTALL_BASE="$(basename "$STEAM_COMPAT_INSTALL_PATH")"
+	export INSTALL_BASE
+	echo "INSTALL_BASE: $INSTALL_BASE"
+fi
+if [ -z "${PROTON_DEBUG_DIR+x}" ]; then
+	export PROTON_DEBUG_DIR="$HOME/Games/__Apps__/Native-Cache"
+fi
+if ! [ -d "${PROTON_DEBUG_DIR}" ]; then
+	if [ -e "${PROTON_DEBUG_DIR}" ]; then
+		rm -rfv "$PROTON_DEBUG_DIR"
+	fi
+	echo PROTON_DEBUG_DIR
+	mkdir -pv "$PROTON_DEBUG_DIR"
+fi
+if [ -z "${DXVK_FILTER_DEVICE_NAME+x}" ]; then
+	export DXVK_FILTER_DEVICE_NAME="NVIDIA GeForce RTX 3060"
+fi
+if [ -z "${VKD3D_FILTER_DEVICE_NAME}" ]; then
+	export VKD3D_FILTER_DEVICE_NAME="NVIDIA GeForce RTX 3060"
+fi
+if ! [ -d "${STEAM_COMPAT_DATA_PATH}" ]; then
+	if [ -e "${STEAM_COMPAT_DATA_PATH}" ]; then
+		rm -rfv "$STEAM_COMPAT_DATA_PATH"
+	fi
+	echo STEAM_COMPAT_DATA_PATH
+	mkdir -pv "$STEAM_COMPAT_DATA_PATH"
+fi
+if [ -z "${STEAM_COMPAT_BY_NAME_BASE+x}" ]; then
+	export STEAM_COMPAT_BY_NAME_BASE="$HOME/Games/__Userdata__/compatdata/By-Name"
+fi
+if [ -z "${STEAM_COMPAT_BY_NAME+x}" ]; then
+	export STEAM_COMPAT_BY_NAME="$STEAM_COMPAT_BY_NAME_BASE/$INSTALL_BASE"
+fi
+if ! [ -d "$STEAM_COMPAT_BY_NAME_BASE" ]; then
+	if [ -e "$STEAM_COMPAT_BY_NAME_BASE" ]; then
+		rm -rfv "$STEAM_COMPAT_BY_NAME_BASE"
+	fi
+	echo "$STEAM_COMPAT_BY_NAME_BASE"
+	mkdir -pv "$STEAM_COMPAT_BY_NAME_BASE"
+fi
+if [ -z "${SDL_VIDEODRIVER+x}" ]; then
+	export SDL_VIDEODRIVER="windows,wayland,x11"
 fi
 if [ -z "${JMN_LSFG+x}" ]; then
 	export JMN_LSFG="0"
 fi
+if [ "$JMN_LSFG" = "1" ] || [ "$JMN_LSFG" = "true" ] || [ "$JMN_LSFG" = "yes" ]; then
+	export LSFG_PROCESS="LSFG-VK Injected Game"
+fi
+if [ -z "${JMN_DXVK+x}" ]; then
+	export JMN_DXVK="1"
+fi
+if [ -z "${JMN_EXPLORER+x}" ]; then
+	export JMN_EXPLORER="0"
+fi
 if [ -z "${JMN_MANGOHUD+x}" ]; then
 	export JMN_MANGOHUD="0"
+fi
+if [ -z "${JMN_NODECORATE+x}" ]; then
+	export JMN_NODECORATE="0"
+fi
+if [ -z "${JMN_NONGX+x}" ]; then
+	export JMN_NONGX="0"
+fi
+if [ -z "${JMN_NONVAPI+x}" ]; then
+	export JMN_NONVAPI="0"
+fi
+if [ -z "${JMN_NOSYNC+x}" ]; then
+	export JMN_NOSYNC="1"
+fi
+if [ -z "${JMN_SDL+x}" ]; then
+	export JMN_SDL="0"
+fi
+if [ -z "${JMN_WEMOD+x}" ]; then
+	export JMN_WEMOD="0"
 fi
 if [ -z "${JMN_ZINK+x}" ]; then
 	export JMN_ZINK="0"
 fi
-if [ "$JMN_NOPRELOAD" = "1" ] || [ "$JMN_NOPRELOAD" = "true" ] || [ "$JMN_NOPRELOAD" = "yes" ]; then
-	export LD_PRELOAD=""
+if [ -z "${JMN_DECK+x}" ]; then
+	export JMN_DECK="0"
 fi
-if [ "$JMN_LSFG" = "1" ] || [ "$JMN_LSFG" = "true" ] || [ "$JMN_LSFG" = "yes" ]; then
-	export LSFG_PROCESS="LSFG-VK Injected Game"
+if [ -z "${JMN_NOXESSUP+x}" ]; then
+	export JMN_NOXESSUP="1"
 fi
+if [ -z "${JMN_SURROUND+x}" ]; then
+	export JMN_SURROUND="0"
+fi
+if [ "$JMN_SURROUND" = "1" ] || [ "$JMN_SURROUND" = "true" ] || [ "$JMN_SURROUND" = "yes" ]; then
+	if [ -z "${WINEDLLOVERRIDES+x}" ]; then
+		export WINEDLLOVERRIDES="winepulse.drv=d"
+	elif [ -n "${WINEDLLOVERRIDES+x}" ]; then
+		export WINEDLLOVERRIDES="${WINEDLLOVERRIDES};winepulse.drv=d"
+	fi
+	export WINEALSA_CHANNELS="6"
+elif ! [ "$JMN_SURROUND" = "1" ] && ! [ "$JMN_SURROUND" = "true" ] && ! [ "$JMN_SURROUND" = "yes" ]; then
+	if [ -z "${WINEDLLOVERRIDES+x}" ]; then
+		export WINEDLLOVERRIDES="winepulse.drv=d"
+	elif [ -n "${WINEDLLOVERRIDES+x}" ]; then
+		export WINEDLLOVERRIDES="${WINEDLLOVERRIDES};winepulse.drv=d"
+	fi
+	export WINEALSA_CHANNELS="2"
+fi
+if [ -z "${JMN_SURROUND_FIX+x}" ]; then
+	export JMN_SURROUND_FIX="0"
+fi
+if [ "$JMN_SURROUND_FIX" = "1" ] || [ "$JMN_SURROUND_FIX" = "true" ] || [ "$JMN_SURROUND_FIX" = "yes" ]; then
+	export WINEALSA_SPATIAL="1"
+fi
+if [ "$JMN_NOXESSUP" = "1" ] || [ "$JMN_NOXESSUP" = "true" ] || [ "$JMN_NOXESSUP" = "yes" ]; then
+	export PROTON_XESS_UPGRADE="0"
+fi
+if [ -z "${PROTON_XESS_UPGRADE+x}" ]; then
+	export PROTON_XESS_UPGRADE="1"
+fi
+if [ -z "${JMN_NOFSR4UP+x}" ]; then
+	export JMN_NOFSR4UP="1"
+fi
+if [ "$JMN_NOFSR4UP" = "1" ] || [ "$JMN_NOFSR4UP" = "true" ] || [ "$JMN_NOFSR4UP" = "yes" ]; then
+	export PROTON_FSR4_UPGRADE="0"
+fi
+if [ -z "${PROTON_FSR4_UPGRADE+x}" ]; then
+	export PROTON_FSR4_UPGRADE="1"
+fi
+if [ -z "${JMN_NODLSSUP+x}" ]; then
+	export JMN_NODLSSUP="1"
+fi
+if [ "$JMN_NODLSSUP" = "1" ] || [ "$JMN_NODLSSUP" = "true" ] || [ "$JMN_NODLSSUP" = "yes" ]; then
+	export PROTON_DLSS_UPGRADE="0"
+fi
+if [ -z "${PROTON_DLSS_UPGRADE+x}" ]; then
+	export PROTON_DLSS_UPGRADE="1"
+fi
+if [ -n "${JMN_FPS+x}" ]; then
+	if ! [[ "${JMN_FPS}" =~ ^[0-9]+$ ]]; then
+		export JMN_FPS="30"
+	elif [[ "${JMN_FPS}" =~ ^[0-9]+$ ]]; then
+		export JMN_FPS
+	fi
+elif [ -z "${JMN_FPS+x}" ]; then
+	export JMN_FPS="30"
+fi
+if [ -z "${JMN_ANISO+x}" ]; then
+	export JMN_ANISO="-1"
+fi
+if [ -z "${JMN_VSYNC+x}" ]; then
+	export JMN_VSYNC="-1"
+fi
+if [ -z "${JMN_32+x}" ]; then
+	export JMN_32="0"
+fi
+if [ "$JMN_32" = "1" ] || [ "$JMN_32" = "true" ] || [ "$JMN_32" = "yes" ]; then
+	export PROTON_USE_WOW64="1"
+fi
+if [ -z "${PROTON_USE_WOW64+x}" ]; then
+	export PROTON_USE_WOW64="0"
+fi
+if [ -z "${JMN_NONTSYNC+x}" ]; then
+	export JMN_NONTSYNC="1"
+fi
+if [ "$JMN_NONTSYNC" = "1" ] || [ "$JMN_NONTSYNC" = "true" ] || [ "$JMN_NONTSYNC" = "yes" ]; then
+	export PROTON_USE_NTSYNC="0"
+	export PROTON_NO_NTSYNC="1"
+elif [ "$JMN_NONTSYNC" != "1" ] && [ "$JMN_NONTSYNC" != "true" ] && [ "$JMN_NONTSYNC" != "yes" ]; then
+	export PROTON_USE_NTSYNC="1"
+	export PROTON_NO_NTSYNC="0"
+fi
+if [ "$JMN_SDL" = "1" ] || [ "$JMN_SDL" = "true" ] || [ "$JMN_SDL" = "yes" ]; then
+	export PROTON_PREFER_SDL_INPUT="1"
+	export WINE_PREFER_SDL_INPUT="1"
+fi
+if [ "$JMN_NODECORATE" = "1" ] || [ "$JMN_NODECORATE" = "true" ] || [ "$JMN_NODECORATE" = "yes" ]; then
+	export PROTON_NO_WM_DECORATION="1"
+	export WINE_NO_WM_DECORATION="1"
+fi
+if [ -z "${UMU_NO_RUNTIME+x}" ]; then
+	export UMU_NO_RUNTIME="1"
+fi
+if [ -z "${UMU_RUNTIME_UPDATE+x}" ]; then
+	export UMU_RUNTIME_UPDATE="1"
+fi
+if [ -z "${JMN_NODLSSSWAP+x}" ]; then
+	export JMN_NODLSSSWAP="1"
+fi
+#if [ -z "${PROTON_VERB+x}" ]; then
+#	export PROTON_VERB="waitforexitandrun"
+#fi
 if [ -z "${JMN_EXEC+x}" ]; then
-	if ! [ -f "$(which gamemoderun)" ] && [ -f "$(which game-performance)" ]; then
-		export JMN_EXEC=("game-performance" "$@")
-	elif [ -f "$(which gamemoderun)" ] && [ -f "$(which game-performance)" ]; then
-		export JMN_EXEC=("game-performance" "$@")
-	elif [ -f "$(which gamemoderun)" ] && ! [ -f "$(which game-performance)" ]; then
-		export JMN_EXEC=("gamemoderun" "$@")
-	elif ! [ -f "$(which gamemoderun)" ] && ! [ -f "$(which game-performance)" ]; then
-		export JMN_EXEC=("$@")
+	if ! [ -f "$(which gamemoderun 2>/dev/null)" ] && [ -f "$(which game-performance 2>/dev/null)" ]; then
+		export JMN_EXEC=("game-performance" "${@:-${@}}")
+	elif [ -f "$(which gamemoderun 2>/dev/null)" ] && [ -f "$(which game-performance 2>/dev/null)" ]; then
+		export JMN_EXEC=("game-performance" "${@:-${@}}")
+	elif [ -f "$(which gamemoderun 2>/dev/null)" ] && ! [ -f "$(which game-performance 2>/dev/null)" ]; then
+		export JMN_EXEC=("gamemoderun" "${@:-${@}}")
+	elif ! [ -f "$(which gamemoderun 2>/dev/null)" ] && ! [ -f "$(which game-performance 2>/dev/null)" ]; then
+		export JMN_EXEC=("${@:-${@}}")
 	fi
 elif [ -n "${JMN_EXEC+x}" ]; then
-	export JMN_EXEC=("${JMN_EXEC[@]}" "$@")
+	export JMN_EXEC=("${JMN_EXEC[@]}" "${@:-${@}}")
+fi
+if [ "$JMN_NODLSSSWAP" != "1" ] && [ "$JMN_NODLSSSWAP" != "true" ] && [ "$JMN_NODLSSSWAP" != "yes" ]; then
+	export JMN_EXEC=("dlss-swapper" "${JMN_EXEC[@]}")
 fi
 if [ "$JMN_MANGOHUD" = "1" ] || [ "$JMN_MANGOHUD" = "true" ] || [ "$JMN_MANGOHUD" = "yes" ]; then
 	export JMN_EXEC=("mangohud" "${JMN_EXEC[@]}")
+fi
+if [ "$JMN_WEMOD" = "1" ] || [ "$JMN_WEMOD" = "true" ] || [ "$JMN_WEMOD" = "yes" ]; then
+	export WEMOD_DIR="$HOME/Repos/Games/wemod-launcher"
+	do_git_pull "$WEMOD_DIR"
+	chmod -R ug+x "$WEMOD_DIR"
+	export JMN_EXEC=("$WEMOD_DIR/wemod" "${JMN_EXEC[@]}")
+fi
+if [ "$JMN_DECK" = "1" ] || [ "$JMN_DECK" = "true" ] || [ "$JMN_DECK" = "yes" ]; then
+	export SteamDeck="1"
+fi
+if [ -z "${DXVK_CONFIG+x}" ]; then
+	export DXVK_CONFIG="d3d11.maxFeatureLevel=12_1:d3d11.samplerAnisotropy=$JMN_ANISO:d3d9.customDeviceId=2503:d3d9.customVendorId=10de:d3d9.dpiAware=True:d3d9.maxAvailableMemory=12160:d3d9.maxFrameRate=$JMN_FPS:d3d9.presentInterval=$JMN_VSYNC:d3d9.samplerAnisotropy=$JMN_ANISO:d3d9.shaderModel=3:dxgi.customDeviceId=2503:dxgi.customVendorId=10de:dxgi.maxDeviceMemory=12160:dxgi.maxFrameRate=$JMN_FPS:dxgi.syncInterval=$JMN_VSYNC:dxvk.enableAsync=true:dxvk.tearFree=Auto"
+elif [ -n "${DXVK_CONFIG+x}" ]; then
+	export DXVK_CONFIG="${DXVK_CONFIG}:d3d11.maxFeatureLevel=12_1:d3d11.samplerAnisotropy=$JMN_ANISO:d3d9.customDeviceId=2503:d3d9.customVendorId=10de:d3d9.dpiAware=True:d3d9.maxAvailableMemory=12160:d3d9.maxFrameRate=$JMN_FPS:d3d9.presentInterval=$JMN_VSYNC:d3d9.samplerAnisotropy=$JMN_ANISO:d3d9.shaderModel=3:dxgi.customDeviceId=2503:dxgi.customVendorId=10de:dxgi.maxDeviceMemory=12160:dxgi.maxFrameRate=$JMN_FPS:dxgi.syncInterval=$JMN_VSYNC:dxvk.enableAsync=true:dxvk.tearFree=Auto"
+fi
+if [ -z "${VKD3D_FRAME_RATE+x}" ]; then
+	export VKD3D_FRAME_RATE="$JMN_FPS"
 fi
 if [ "$JMN_ZINK" = "1" ] || [ "$JMN_ZINK" = "true" ] || [ "$JMN_ZINK" = "yes" ]; then
 	export __GLX_VENDOR_LIBRARY_NAME="mesa"
 	export GALLIUM_DRIVER="zink"
 	export MESA_LOADER_DRIVER_OVERRIDE="zink"
 fi
-if [ -z "${LOG_DIR+x}" ]; then
-	export LOG_DIR="$HOME/Games/__Apps__/Native-Cache/logs/$SteamAppId"
+if [ "$JMN_EXPLORER" = "1" ] || [ "$JMN_EXPLORER" = "true" ] || [ "$JMN_EXPLORER" = "yes" ]; then
+	export PROTON_REMOTE_DEBUG_CMD="$HOME/Games/__Tools__/Explorer++/Explorer++.exe"
 fi
-if ! [ -d "${LOG_DIR}" ]; then
-	if [ -e "${LOG_DIR}" ]; then
-		rm -rf "$LOG_DIR"
+if [ -d "${PROTON_DEBUG_DIR}" ]; then
+	if [ -z "${LOG_DIR+x}" ]; then
+		export LOG_DIR="$PROTON_DEBUG_DIR/logs/$INSTALL_BASE"
+	fi	
+	if [ -z "${PROTONLOGPATH+x}" ]; then
+		export PROTONLOGPATH="$PROTON_DEBUG_DIR/logs/$INSTALL_BASE"
 	fi
-	echo LOG_DIR
-	mkdir -p "$LOG_DIR"
 fi
 if [ -z "${SCRIPT_DIR+x}" ]; then
-	export SCRIPT_DIR="$HOME/Games/wine/"
+	export SCRIPT_DIR="$HOME/Games/wine"
 fi
 if ! [ -d "${SCRIPT_DIR}" ]; then
 	if [ -e "${SCRIPT_DIR}" ]; then
-		rm -rf "$SCRIPT_DIR"
+		rm -rfv "$SCRIPT_DIR"
 	fi
 	echo SCRIPT_DIR
-	mkdir -p "$SCRIPT_DIR"
+	mkdir -pv "$SCRIPT_DIR"
+fi
+if ! [ -d "${LOG_DIR}" ]; then
+	if [ -e "${LOG_DIR}" ]; then
+		rm -rfv "$LOG_DIR"
+	fi
+	echo LOG_DIR
+	mkdir -pv "$LOG_DIR"
+fi
+if ! [ -d "${PROTONLOGPATH}" ]; then
+	if [ -e "${PROTONLOGPATH}" ]; then
+		rm -rfv "$PROTONLOGPATH"
+	fi
+	echo PROTONLOGPATH
+	mkdir -pv "$PROTONLOGPATH"
+fi
+if ! [ -d "${WINEPREFIX}" ]; then
+	if [ -e "${WINEPREFIX}" ]; then
+		rm -rfv "$WINEPREFIX"
+	fi
+	echo WINEPREFIX
+	mkdir -pv "$WINEPREFIX"
+fi
+if [ -z "${STEAM_COMPAT_SHADER_PATH+x}" ]; then
+	#if [ "$STEAM_COMPAT_DATA_PATH" == "$HOME/Games/__Userdata__/compatdata/Steam-Other/$SteamAppId" ]; then
+		STEAM_COMPAT_SHADER_PATH="$HOME/Games/__Apps__/Shader-Cache/Native/$SteamAppId"
+	#else
+	#	STEAM_COMPAT_SHADER_PATH="$(realpath -q "$STEAM_COMPAT_DATA_PATH/../../shadercache/$SteamAppId")"
+	#fi
+	export STEAM_COMPAT_SHADER_PATH
+	if ! [ -d "${STEAM_COMPAT_SHADER_PATH}" ]; then
+		if [ -e "${STEAM_COMPAT_SHADER_PATH}" ]; then
+			rm -rfv "$STEAM_COMPAT_SHADER_PATH"
+		fi
+		echo STEAM_COMPAT_SHADER_PATH
+		mkdir -pv "$STEAM_COMPAT_SHADER_PATH"
+	fi
+fi
+if [ -d "${STEAM_COMPAT_SHADER_PATH}" ]; then
+	if [ -z "${__GL_SHADER_DISK_CACHE_PATH+x}" ]; then
+		export __GL_SHADER_DISK_CACHE_PATH="$STEAM_COMPAT_SHADER_PATH/nvidiav1"
+	fi
+	if [ -z "${AMD_VK_PIPELINE_CACHE_PATH+x}" ]; then
+		export AMD_VK_PIPELINE_CACHE_PATH="$STEAM_COMPAT_SHADER_PATH/AMDv1"
+	fi
+	if [ -z "${DXVK_STATE_CACHE_PATH+x}" ]; then
+		export DXVK_STATE_CACHE_PATH="$STEAM_COMPAT_SHADER_PATH/DXVK_state_cache"
+	fi
+	if [ -z "${DXVK_SHADER_CACHE_PATH+x}" ]; then
+		export DXVK_SHADER_CACHE_PATH="$STEAM_COMPAT_SHADER_PATH/DXVK_shader_cache"
+	fi
+	if [ -z "${MESA_GLSL_CACHE_DIR+x}" ]; then
+		export MESA_GLSL_CACHE_DIR="$STEAM_COMPAT_SHADER_PATH"
+	fi
+	if [ -z "${MESA_SHADER_CACHE_DIR+x}" ]; then
+		export MESA_SHADER_CACHE_DIR="$STEAM_COMPAT_SHADER_PATH"
+	fi
+	if [ -z "${VKD3D_SHADER_CACHE_PATH+x}" ]; then
+		export VKD3D_SHADER_CACHE_PATH="$STEAM_COMPAT_SHADER_PATH/VKD3D_state_cache"
+	fi
+fi
+get_file_arch_dxvk() {
+	local _W_file="$1"
+	_W_ob_output="$(od -An -t x1 -j 0x12 -N 1 "${_W_file}" | tr -d "[:space:]")"
+	local _W_ob_output
+	case "${_W_ob_output}" in
+			"3e")			_W_file_arch="x86_64" ;;
+			"03"|"06") _W_file_arch="i386" ;;
+			*)				 _W_file_arch="" ;;
+	esac
+	echo "${_W_file_arch}"
+}
+if [ -d "${PROTONCOMPATPATH}" ]; then
+	if [ -z "${WINESERVER+x}" ]; then
+		WINESERVER="$(find "$PROTONCOMPATPATH" -type f -wholename "*/bin/wineserver")"
+		export WINESERVER
+		if ! [ -f "${WINESERVER}" ]; then
+			unset WINESERVER
+		fi
+	fi
+	if [ -z "${WINE+x}" ]; then
+		WINE="$(find "$PROTONCOMPATPATH" -type f -wholename "*/bin/wine")"
+		export WINE
+		if ! [ -f "${WINE}" ]; then
+			unset WINE
+		fi
+	fi
+	if [ -z "${WINE64+x}" ]; then
+		WINE64="$(find "$PROTONCOMPATPATH" -type f -wholename "*/bin/wine64")"
+		export WINE64
+		if ! [ -f "${WINE64}" ]; then
+			unset WINE64
+		fi
+	fi
+	if [ -z "$WINEARCH" ]; then
+		WINE_ARCH=$(get_file_arch_dxvk "$WINE")
+		export WINE_ARCH
+		WINE64_ARCH=$(get_file_arch_dxvk "$WINE64")
+		export WINE64_ARCH
+		if [ -f "$WINEPREFIX"/system.reg ]; then
+			ARCH="$(grep "^#arch=win" "$WINEPREFIX"/system.reg)"
+			ARCH="${ARCH##*=}"
+			export ARCH
+		elif [ "$WINE_ARCH" == "x86_64" ] || [ "$WINE64_ARCH" == "x86_64" ]; then
+			export ARCH="win64"
+		elif [ "$WINE_ARCH" == "i386" ] && [ "$WINE64_ARCH" == "" ]; then
+			export ARCH="win32"
+		fi
+	else
+		export ARCH="$WINEARCH"
+	fi
+	if ! [ -f "$WINE64" ]; then
+		export WINE64="$WINE"
+	fi
+	if [ "$ARCH" == "win32" ]; then
+		export WINE64="$WINE"
+	fi
+	if [ -z "${WINE_PATH+x}" ]; then
+		WINE_PATH="$(dirname "$(which "$WINESERVER")")"
+		export WINE_PATH
+	fi
+	if [ -z "${WINEBOOT+x}" ]; then
+		WINEBOOT="$(find "$PROTONCOMPATPATH" -type f -wholename "*/bin/wineboot")"
+		export WINEBOOT
+		if ! [ -f "${WINEBOOT}" ]; then
+			unset WINEBOOT
+		fi
+	fi
+	if [ -z "${WINELOADER+x}" ]; then
+		if [ -f "${WINE64}" ]; then
+			export WINELOADER="$WINE64"
+		elif ! [ -f "${WINE64}" ]; then
+			if [ -f "${WINE}" ]; then
+				export WINELOADER="$WINE"
+			fi
+		fi
+		if ! [ -f "${WINELOADER}" ]; then
+			unset WINELOADER
+		fi
+	fi
+	WINE_VER="$($WINESERVER --version | grep Wine)"
+	export WINE_VER
+fi
+if [ -z "${DXVK_PATH+x}" ]; then
+	export DXVK_PATH="/usr/share/dxvk"
+fi
+if [ "$JMN_NONVAPI" != "1" ] && [ "$JMN_NONVAPI" != "true" ] && [ "$JMN_NONVAPI" != "yes" ]; then
+	export PROTON_DISABLE_NVAPI="0"
+	export PROTON_ENABLE_NVAPI="1"
+	export PROTON_FORCE_NVAPI="1"
+	export PROTON_HIDE_NVIDIA_GPU="0"
+fi
+if [ "$JMN_NOSYNC" != "1" ] && [ "$JMN_NOSYNC" != "true" ] && [ "$JMN_NOSYNC" != "yes" ]; then
+	export PROTON_NO_ESYNC="0"
+	export PROTON_NO_FSYNC="0"
+	export WINEESYNC="1"
+	export WINEFSYNC="1"
+fi
+if [ "$JMN_NONGX" != "1" ] && [ "$JMN_NONGX" != "true" ] && [ "$JMN_NONGX" != "yes" ]; then
+	export PROTON_ENABLE_NGX_UPDATER="1"
 fi
 if [ -z "${__GL_SHADER_DISK_CACHE_SKIP_CLEANUP+x}" ]; then
 	export __GL_SHADER_DISK_CACHE_SKIP_CLEANUP="1"
@@ -82,6 +469,50 @@ fi
 if [ -z "${__GL_THREADED_OPTIMIZATIONS+x}" ]; then
 	export __GL_THREADED_OPTIMIZATIONS="1"
 fi
+if [ -z "${DXVK_HUD+x}" ]; then
+	export DXVK_HUD="compiler"
+elif [ -n "${DXVK_HUD+x}" ]; then
+	export DXVK_HUD="${DXVK_HUD},compiler"
+fi
+if [ -z "${DXVK_LOG_LEVEL+x}" ]; then
+	export DXVK_LOG_LEVEL="none"
+fi
+if [ -z "${VKD3D_DEBUG+x}" ]; then
+	export VKD3D_DEBUG="none"
+fi
+if [ -z "${VKD3D_SHADER_DEBUG+x}" ]; then
+	export VKD3D_SHADER_DEBUG="none"
+fi
+if [ -z "${DXVK_NVAPI_ALLOW_OTHER_DRIVERS+x}" ]; then
+	export DXVK_NVAPI_ALLOW_OTHER_DRIVERS="1"
+fi
+if [ -z "${DXVK_NVAPI_DRIVER_VERSION+x}" ]; then
+	export DXVK_NVAPI_DRIVER_VERSION="47141"
+fi
+if [ -z "${DXVK_NVAPI_LOG_LEVEL+x}" ]; then
+	export DXVK_NVAPI_LOG_LEVEL="none"
+fi
+if [ -z "${DXVK_STATE_CACHE+x}" ]; then
+	export DXVK_STATE_CACHE="1"
+fi
+if [ -z "${DXVK_SHADER_CACHE+x}" ]; then
+	export DXVK_SHADER_CACHE="1"
+fi
+if [ -z "${PROTON_DUMP_DEBUG_COMMANDS+x}" ]; then
+	export PROTON_DUMP_DEBUG_COMMANDS="1"
+fi
+if [ -z "${PROTON_FORCE_LARGE_ADDRESS_AWARE+x}" ]; then
+	export PROTON_FORCE_LARGE_ADDRESS_AWARE="1"
+fi
+if [ -z "${PROTON_LOG+x}" ]; then
+	export PROTON_LOG="0"
+fi
+if [ -z "${PROTON_SET_GAME_DRIVE+x}" ]; then
+	export PROTON_SET_GAME_DRIVE="1"
+fi
+if [ -z "${PROTON_USE_XALIA+x}" ]; then
+	export PROTON_USE_XALIA="0"
+fi
 if [ -z "${RADV_PERFTEST+x}" ]; then
 	export RADV_PERFTEST="gpl"
 elif [ -n "${RADV_PERFTEST+x}" ]; then
@@ -90,11 +521,314 @@ fi
 if [ -z "${VK_ICD_FILENAMES+x}" ] && [ -z "${container+x}" ]; then
 	export VK_ICD_FILENAMES="/usr/share/vulkan/icd.d/nvidia_icd.json"
 fi
-{
-	printenv -0 | sort -f -z | tr '\0' '\n'
-} > "$LOG_DIR/environment.list"
-cp -f -s -t "$SCRIPT_DIR" "$LOG_DIR/environment.list"
-do_git_pull "$INST_MC_DIR/resourcepacks/GTNH-Faithful-Textures/"
+if [ -z "${VKD3D_CONFIG+x}" ]; then
+	export VKD3D_CONFIG="dxr12"
+elif [ -n "${VKD3D_CONFIG+x}" ]; then
+	export VKD3D_CONFIG="${VKD3D_CONFIG},dxr12"
+fi
+if [ -z "${VKD3D_FEATURE_LEVEL+x}" ]; then
+	export VKD3D_FEATURE_LEVEL="12_2"
+fi
+if [ -z "${WINE_FULLSCREEN_INTEGER_SCALING+x}" ]; then
+	export WINE_FULLSCREEN_INTEGER_SCALING="1"
+fi
+if [ -z "${VKD3D_SHADER_MODEL+x}" ]; then
+	export VKD3D_SHADER_MODEL="6_7"
+fi
+if [ -z "${WINE_CPU_TOPOLOGY+x}" ]; then
+	export WINE_CPU_TOPOLOGY="7:1,2,3,4,5,6,7"
+fi
+if [ -z "${WINEDEBUG+x}" ]; then
+	export WINEDEBUG="-all"
+fi
+if [ -z "${WINE_SIMULATE_WRITECOPY+x}" ]; then
+	export WINE_SIMULATE_WRITECOPY="1"
+fi
+if ! [ -d "${MESA_SHADER_CACHE_DIR}" ]; then
+	if [ -e "${MESA_SHADER_CACHE_DIR}" ]; then
+		rm -rfv "$MESA_SHADER_CACHE_DIR"
+	fi
+	echo MESA_SHADER_CACHE_DIR
+	mkdir -pv "$MESA_SHADER_CACHE_DIR"
+fi
+if ! [ -d "${MESA_GLSL_CACHE_DIR}" ]; then
+	if [ -e "${MESA_GLSL_CACHE_DIR}" ]; then
+		rm -rfv "$MESA_GLSL_CACHE_DIR"
+	fi
+	echo MESA_GLSL_CACHE_DIR
+	mkdir -pv "$MESA_GLSL_CACHE_DIR"
+fi
+if ! [ -d "${STEAM_COMPAT_SHADER_PATH}" ]; then
+	if [ -e "${STEAM_COMPAT_SHADER_PATH}" ]; then
+		rm -rfv "$STEAM_COMPAT_SHADER_PATH"
+	fi
+	echo STEAM_COMPAT_SHADER_PATH
+	mkdir -pv "$STEAM_COMPAT_SHADER_PATH"
+fi
+if ! [ -d "${AMD_VK_PIPELINE_CACHE_PATH}" ]; then
+	if [ -e "${AMD_VK_PIPELINE_CACHE_PATH}" ]; then
+		rm -rfv "$AMD_VK_PIPELINE_CACHE_PATH"
+	fi
+	echo AMD_VK_PIPELINE_CACHE_PATH
+	mkdir -pv "$AMD_VK_PIPELINE_CACHE_PATH"
+fi
+if ! [ -d "${__GL_SHADER_DISK_CACHE_PATH}" ]; then
+	if [ -e "${__GL_SHADER_DISK_CACHE_PATH}" ]; then
+		rm -rfv "$__GL_SHADER_DISK_CACHE_PATH"
+	fi
+	echo __GL_SHADER_DISK_CACHE_PATH
+	mkdir -pv "$__GL_SHADER_DISK_CACHE_PATH"
+fi
+if ! [ -d "${DXVK_STATE_CACHE_PATH}" ]; then
+	if [ -e "${DXVK_STATE_CACHE_PATH}" ]; then
+		rm -rfv "$DXVK_STATE_CACHE_PATH"
+	fi
+	echo DXVK_STATE_CACHE_PATH
+	mkdir -pv "$DXVK_STATE_CACHE_PATH"
+fi
+if ! [ -d "${DXVK_SHADER_CACHE_PATH}" ]; then
+	if [ -e "${DXVK_SHADER_CACHE_PATH}" ]; then
+		rm -rfv "$DXVK_SHADER_CACHE_PATH"
+	fi
+	echo DXVK_SHADER_CACHE_PATH
+	mkdir -pv "$DXVK_SHADER_CACHE_PATH"
+fi
+
+if ! [ -d "${VKD3D_SHADER_CACHE_PATH}" ]; then
+	if [ -e "${VKD3D_SHADER_CACHE_PATH}" ]; then
+		rm -rfv "$VKD3D_SHADER_CACHE_PATH"
+	fi
+	echo VKD3D_SHADER_CACHE_PATH
+	mkdir -pv "$VKD3D_SHADER_CACHE_PATH"
+fi
+appendwinepath() {
+	case ":$WINEDLLPATH:" in
+		*:"$1":*)
+			;;
+		*)
+			export WINEDLLPATH="${WINEDLLPATH:+$WINEDLLPATH:}$1"
+	esac
+}
+if [ "${WINEDLLPATH}" != "$HOME/.local/lib/discord-rpc-wine/x86_64:$HOME/.local/lib/discord-rpc-wine/i686" ]; then
+	if [ -d "$HOME/.local/lib/discord-rpc-wine/x86_64" ]; then
+		appendwinepath "$HOME/.local/lib/discord-rpc-wine/x86_64"
+	fi
+	if [ -d "$HOME/.local/lib/discord-rpc-wine/i686" ]; then
+		appendwinepath "$HOME/.local/lib/discord-rpc-wine/i686"
+	fi
+	if [ -d "$HOME/.local/lib/discord-rpc-wine/i686" ] || [ -d "$HOME/.local/lib/discord-rpc-wine/x86_64" ]; then
+		if [ -z "${WINEDLLOVERRIDES+x}" ]; then
+			export WINEDLLOVERRIDES="discord-rpc=b"
+		elif [ -n "${WINEDLLOVERRIDES+x}" ]; then
+			export WINEDLLOVERRIDES="${WINEDLLOVERRIDES};discord-rpc=b"
+		fi
+	fi
+fi
+if [ -z "${WINEDLLOVERRIDES+x}" ]; then
+	export WINEDLLOVERRIDES="winemenubuilder.exe=d"
+elif [ -n "${WINEDLLOVERRIDES+x}" ]; then
+	export WINEDLLOVERRIDES="${WINEDLLOVERRIDES};winemenubuilder.exe=d"
+fi
+export dxvk_lib32=${dxvk_lib32:-"x32"}
+export dxvk_lib64=${dxvk_lib64:-"x64"}
+SYSTEM32_PATH=$($WINE64 winepath.exe -u 'C:\windows\system32')
+SYSTEM32_PATH="${SYSTEM32_PATH/$'\r'/}"
+export SYSTEM32_PATH
+SYSWOW64_PATH=$($WINE64 winepath.exe -u 'C:\windows\syswow64')
+SYSWOW64_PATH="${SYSWOW64_PATH/$'\r'/}"
+export SYSWOW64_PATH
+if [ -z "$SYSWOW64_PATH" ] && [ -z "$SYSTEM32_PATH" ]; then
+	echo "Failed to resolve \"C:\windows\system32\"."
+	exit 1
+fi
+overrideDll_dxvk() {
+	if ! $WINE64 reg add 'HKEY_CURRENT_USER\Software\Wine\DllOverrides' /v "$1" /d native /f; then
+		echo -e "Failed to add override for \"$1\""
+		exit 1
+	fi
+}
+installFile_dxvk() {
+	local dstfile="${1}/${3}.dll"
+	local srcfile="${DXVK_PATH}/${2}/${3}.dll"
+	if ! [ -f "${srcfile}" ]; then
+		echo "${srcfile}: File not found. Skipping."
+		return 1
+	fi
+	if [ -n "$1" ]; then
+		if [ -f "${dstfile}" ] || [ -h "${dstfile}" ]; then
+			if ! [ -f "${dstfile}.old" ]; then
+				mv -v "${dstfile}" "${dstfile}.old"
+			else
+				rm -v "${dstfile}"
+			fi
+		else
+			touch "${dstfile}.old_none"
+		fi
+		cp -v --reflink=auto "${srcfile}" "${dstfile}"
+	fi
+	return 0
+}
+install_dxvk() {
+	if [ "$ARCH" == "win32" ]; then
+		local lib="$dxvk_lib32"
+		local dll="${1}"
+	else
+		local lib="$dxvk_lib64"
+		local dll="${1}"
+	fi
+	if installFile_dxvk "$SYSTEM32_PATH" "$lib" "$dll"; then
+		overrideDll_dxvk "$dll"
+	fi
+	if [ -d "$SYSWOW64_PATH" ]; then
+		if installFile_dxvk "$SYSWOW64_PATH" "$dxvk_lib32" "$1"; then
+			overrideDll_dxvk "$1"
+		fi
+	fi
+}
+fixwineprefix() {
+	#export WINEPREFIXDRIVEC="$WINEPREFIX/drive_c"
+	#if [ -f "${WINEBOOT}" ]; then
+	#	"$WINE64" "${WINEBOOT}" -u
+	#fi
+	if [ -e  "${STEAM_COMPAT_BY_NAME}" ]; then
+		if [ -L  "${STEAM_COMPAT_BY_NAME}" ]; then
+			echo "Removing Target Link \"${STEAM_COMPAT_BY_NAME}\""
+			unlink "${STEAM_COMPAT_BY_NAME}"
+			echo ""
+		fi
+		if [ -d "${STEAM_COMPAT_BY_NAME}" ]; then
+			echo "Removing Target Directory \"${STEAM_COMPAT_BY_NAME}\""
+			rm -rfv "${STEAM_COMPAT_BY_NAME}"
+			echo ""
+		fi
+	fi
+	if ! [ -e  "${STEAM_COMPAT_BY_NAME}" ]; then
+		echo "Creating Link pointing to \"$STEAM_COMPAT_DATA_PATH\" in \"$STEAM_COMPAT_BY_NAME_BASE\" named \"$INSTALL_BASE\""
+		ln -sfv "$STEAM_COMPAT_DATA_PATH" "$STEAM_COMPAT_BY_NAME"
+		echo ""
+	fi
+	#if [ -d "${WINEPREFIXDRIVEC}" ]; then
+		#echo "Fixing Symlinks in \"$WINEPREFIXDRIVEC\""
+		#echo ""
+		#if [ -L "$WINEPREFIXDRIVEC/users" ]; then
+		#	echo "Removing Target Link \"$WINEPREFIXDRIVEC/users\""
+		#	unlink "$WINEPREFIXDRIVEC/users"
+		#	echo ""
+		#fi
+		#if [ -L "$WINEPREFIXDRIVEC/windows/temp" ]; then
+		#	echo "Removing Target Link \"$WINEPREFIXDRIVEC/windows/temp\""
+		#	unlink "$WINEPREFIXDRIVEC/windows/temp"
+		#	echo ""
+		#fi
+		#if [ -d "$WINEPREFIXDRIVEC/users" ]; then
+		#	if [ ! -h "$WINEPREFIXDRIVEC/users" ]; then
+		#		echo "Removing Target Directory \"$WINEPREFIXDRIVEC/users\""
+		#		rm -rfd "$WINEPREFIXDRIVEC/users"
+		#		echo ""
+		#	fi
+		#fi
+		#if [ -d "$WINEPREFIXDRIVEC/windows/temp" ]; then
+		#	if [ ! -h "$WINEPREFIXDRIVEC/windows/temp" ]; then
+		#		echo "Removing Target Directory \"$WINEPREFIXDRIVEC/windows/temp\""
+		#		rm -rfd "$WINEPREFIXDRIVEC/windows/temp"
+		#		echo ""
+		#	fi
+		#fi
+		#if ! [ -e "$WINEPREFIXDRIVEC/users" ]; then
+		#	echo "Creating Link pointing to \"$HOME/Games/__Userdata__/users/\" in \"$WINEPREFIXDRIVEC\" named \"users\""
+		#	ln -sfv "$HOME/Games/__Userdata__/users/" "$WINEPREFIXDRIVEC/users"
+		#	echo ""
+		#fi
+		#if ! [ -e "$WINEPREFIXDRIVEC/windows/temp" ]; then
+		#	echo "Creating Link pointing to \"/tmp/\" in \"$WINEPREFIXDRIVEC/windows\" named \"temp\""
+		#	ln -sfv "/tmp/" "$WINEPREFIXDRIVEC/windows/temp"
+		#	echo ""
+		#fi
+		#echo Printing Current Wine Locations And Settings
+		#echo ""
+		#if [ -n "$PROTONCOMPATPATH" ]; then
+		#	echo "Proton Path Is \"$PROTONCOMPATPATH\""
+		#elif [ -z "$PROTONCOMPATPATH" ]; then
+		#	echo Proton Path Not Found
+		#fi
+		#if [ -n "$WINE_PATH" ]; then
+		#	echo "Wine Path Is \"$WINE_PATH\""
+		#elif [ -z "$WINE_PATH" ]; then
+		#	echo Wine Path Not Found
+		#fi
+		#if [ -n "$WINE64" ]; then
+		#	echo "Wine64 Executable Is \"$WINE64\""
+		#elif [ -z "$WINE64" ]; then
+		#	echo Wine64 Executable Not Found
+		#fi
+		#if [ -n "$WINE" ]; then
+		#	echo "Wine Executable Is \"$WINE\""
+		#elif [ -z "$WINE" ]; then
+		#	echo Wine Executable Not Found
+		#fi
+		#if [ -n "$WINELOADER" ]; then
+		#	echo "Wine Loader Executable Is \"$WINELOADER\""
+		#elif [ -z "$WINELOADER" ]; then
+		#	echo Wine Loader Executable Not Found
+		#fi
+		#if [ -n "$WINESERVER" ]; then
+		#	echo "Wine Server Executable Is \"$WINESERVER\""
+		#elif [ -z "$WINESERVER" ]; then
+		#	echo Wine Server Executable Not Found
+		#fi
+		#if [ -n "$WINEBOOT" ]; then
+		#	echo "Wine Boot Executable Is \"$WINEBOOT\""
+		#elif [ -z "$WINEBOOT" ]; then
+		#	echo Wine Boot Executable Not Found
+		#fi
+		#if [ -n "$WINE_VER" ]; then
+		#	echo "Wine Version Is \"$WINE_VER\""
+		#elif [ -z "$WINE_VER" ]; then
+		#	echo Wine Version Not Found
+		#fi
+		#if [ -n "$ARCH" ]; then
+		#	echo "Wine Architecture Is \"$ARCH\""
+		#elif [ -z "$ARCH" ]; then
+		#	echo Wine Architecture Not Found
+		#fi
+		#if [ "$JMN_DXVK" = "1" ] || [ "$JMN_DXVK" = "true" ] || [ "$JMN_DXVK" = "yes" ]; then
+		#	$WINESERVER -w
+		#	echo Installing DXVK
+		#	install_dxvk d3d8
+		#	install_dxvk d3d9
+		#	install_dxvk d3d10core
+		#	install_dxvk d3d11
+		#	install_dxvk dxgi
+		#fi
+		#if [ -e "$STEAM_COMPAT_INSTALL_PATH/x" ] && ! [ -d "$STEAM_COMPAT_INSTALL_PATH/x" ]; then
+		#	rm -rfv "$STEAM_COMPAT_INSTALL_PATH/x"
+		#fi
+		#if [ -e "$(pwd)/x" ] && ! [ -d "$(pwd)/x" ]; then
+		#	rm -rfv "$(pwd)/x"
+		#fi
+		#if [ -e "${WINEPREFIXDRIVEC}/winestreamproxy" ] && ! [ -d "${WINEPREFIXDRIVEC}/winestreamproxy" ]; then
+		#	rm -rfv "${WINEPREFIXDRIVEC}/winestreamproxy"
+		#fi
+		#winetricks mimeassoc=off
+		#echo ""
+		#echo Installing Wine Stream Proxy
+		#echo ""
+		#winestreamproxy-install
+	#fi
+	#if [ -n "$WINEPREFIX" ] && ! [ -f "$WINEPREFIX/system.reg" ]; then
+	#	echo "$WINEPREFIX:"' Not a valid wine prefix.'
+	#	exit 1
+	#fi
+}
+if [ -e "${STEAM_COMPAT_DATA_PATH}" ] && [ -e "${WINEPREFIX}" ]; then
+	echo "Dumping Full Environment To \"$LOG_DIR/environment.list\""
+	{
+		printenv -0 | sort -f -z | tr '\0' '\n'
+	} > "$LOG_DIR/environment.list"
+	fixwineprefix
+	cp -fvst "$SCRIPT_DIR" "$LOG_DIR/environment.list" "$LOG_DIR/prep.log"
+	do_git_pull "$INST_MC_DIR/resourcepacks/GTNH-Faithful-Textures"
+fi
 echo ""
 echo "\"Executing:\""
 echo "\"${JMN_EXEC[*]}\""
