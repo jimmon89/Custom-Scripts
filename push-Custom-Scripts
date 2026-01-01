@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-cd "$HOME/Repos/Misc/Custom-Scripts/" || exit
+pushd "$(dirname "$(readlink -f "$(realpath "$0")")")" || exit
 git add ./*
 git commit -m "Latest as of $(date)"
 git push
+popd || exit
