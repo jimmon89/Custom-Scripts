@@ -1,53 +1,8 @@
 #!/usr/bin/env bash
 export LD_PRELOAD=""
-read_runner() {
-	orig_nocasematch=$(shopt -p nocasematch; true)
-	local orig_nocasematch
-	orig_nullglob=$(shopt -p nullglob; true)
-	local orig_nullglob
-	local OIFS="$IFS"
-	shopt -s nocasematch
-	shopt -s nullglob
-	IFS=$'\n'
-	while IFS= read -r line
-	do
-		# shellcheck disable=SC2001
-		if [[ "${line,,}" =~ ^runnertype=.*$ ]]
-		then
-			RUNNER_TYPE="$(echo "$line" | sed 's/^runnertype=//i')"
-			export RUNNER_TYPE
-		fi
-		# shellcheck disable=SC2001
-		if [[ "${line,,}" =~ ^protonversion=.*$ ]]
-		then
-			PROTON_VERSION="$(echo "$line" | sed 's/^protonversion=//i')"
-			export PROTON_VERSION
-		fi
-		# shellcheck disable=SC2001
-		if [[ "${line,,}" =~ ^wineversion=.*$ ]]
-		then
-			WINE_VERSION="$(echo "$line" | sed 's/^wineversion=//i')"
-			export WINE_VERSION
-		fi
-	done < "$HOME/.xlcore/launcher.ini"
-	$orig_nocasematch
-	$orig_nullglob
-	local IFS="$OIFS"
-}
-read_runner
-if [ "$RUNNER_TYPE" == "Proton" ]; then
-	export PROTONCOMPATPATH="$XDG_DATA_HOME/Steam/compatibilitytools.d/$PROTON_VERSION"
-	export STEAM_COMPAT_DATA_PATH="$HOME/.xlcore/protonprefix"
-	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH/pfx/"
-fi
-if [ "$RUNNER_TYPE" == "Managed" ]; then
-	export PROTONCOMPATPATH="$HOME/.xlcore/compatibilitytool/wine/$WINE_VERSION"
-	export STEAM_COMPAT_DATA_PATH="$HOME/.xlcore/wineprefix"
-	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH"
-fi
 if [ -z "${PROTONCOMPATPATH+x}" ]; then
 	if [ -z "${PROTONPATH+x}" ]; then
-		export PROTONCOMPATPATH="/usr/share/steam/compatibilitytools.d/proton-ge-custom"
+		export PROTONCOMPATPATH="/opt/wine-cachyos"
 	elif [ -n "${PROTONPATH+x}" ]; then
 		export PROTONCOMPATPATH="$PROTONPATH"
 	fi
@@ -57,14 +12,13 @@ if [ -z "${JMN_LOCAL_PROTON+x}" ]; then
 fi
 if [ -z "${STEAM_COMPAT_DATA_PATH+x}" ]; then
 	if [ -n "${WINEPREFIX+x}" ]; then
-		STEAM_COMPAT_DATA_PATH="$(realpath -q "$WINEPREFIX/..")"
-		export STEAM_COMPAT_DATA_PATH
+		export STEAM_COMPAT_DATA_PATH="$WINEPREFIX"
 	elif [ -z "${WINEPREFIX+x}" ]; then
-		export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/Steam-Other/$SteamAppId"
+		export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/Wine/$SteamAppId"
 	fi
 fi
 if [ -z "${WINEPREFIX+x}" ]; then
-	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH/pfx"
+	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH"
 fi
 if [ -z "${WINEPREFIXDRIVEC+x}" ]; then
 	export WINEPREFIXDRIVEC="$WINEPREFIX/drive_c"
@@ -152,7 +106,7 @@ if [ -z "${SteamAppId+x}" ]; then
 	if [ -n "${APPID+x}" ]; then
 		export SteamAppId="$APPID"
 	elif [ -z "${APPID+x}" ]; then
-		export SteamAppId="0"
+		export SteamAppId="default"
 	fi
 fi
 if [ -z "${APPID+x}" ]; then
@@ -160,11 +114,11 @@ if [ -z "${APPID+x}" ]; then
 		export APPID="$SteamAppId"
 	fi
 fi
-if [ "$APPID" == 0 ]; then
+if [ "$APPID" == "default" ]; then
 	export UMU_STEAM_GAME_ID="$APPID"
 	export STORE="none"
 	export GAMEID="umu-default"
-elif [ "$APPID" != 0 ]; then
+elif [ "$APPID" != "default" ]; then
 	export UMU_STEAM_GAME_ID="$APPID"
 	export STORE="steam"
 	export GAMEID="umu-$APPID"
@@ -178,7 +132,7 @@ if [ -z "${INSTALL_BASE+x}" ]; then
 	echo "INSTALL_BASE: $INSTALL_BASE"
 fi
 if [ -z "${PROTON_DEBUG_DIR+x}" ]; then
-	export PROTON_DEBUG_DIR="$HOME/Games/__Apps__/Proton-Cache"
+	export PROTON_DEBUG_DIR="$HOME/Games/__Apps__/Wine-Cache"
 fi
 if ! [ -d "${PROTON_DEBUG_DIR}" ]; then
 	if [ -e "${PROTON_DEBUG_DIR}" ]; then
@@ -362,16 +316,16 @@ fi
 #fi
 if [ -z "${JMN_EXEC+x}" ]; then
 	if ! [ -f "$(which gamemoderun 2>/dev/null)" ] && [ -f "$(which game-performance 2>/dev/null)" ]; then
-		export JMN_EXEC=("game-performance" "${@:-${@}}")
+		export JMN_EXEC=("game-performance" "winetricks" "${@:-${@}}")
 	elif [ -f "$(which gamemoderun 2>/dev/null)" ] && [ -f "$(which game-performance 2>/dev/null)" ]; then
-		export JMN_EXEC=("game-performance" "${@:-${@}}")
+		export JMN_EXEC=("game-performance" "winetricks" "${@:-${@}}")
 	elif [ -f "$(which gamemoderun 2>/dev/null)" ] && ! [ -f "$(which game-performance 2>/dev/null)" ]; then
-		export JMN_EXEC=("gamemoderun" "${@:-${@}}")
+		export JMN_EXEC=("gamemoderun" "winetricks" "${@:-${@}}")
 	elif ! [ -f "$(which gamemoderun 2>/dev/null)" ] && ! [ -f "$(which game-performance 2>/dev/null)" ]; then
-		export JMN_EXEC=("${@:-${@}}")
+		export JMN_EXEC=("winetricks" "${@:-${@}}")
 	fi
 elif [ -n "${JMN_EXEC+x}" ]; then
-	export JMN_EXEC=("${JMN_EXEC[@]}" "${@:-${@}}")
+	export JMN_EXEC=("${JMN_EXEC[@]}" "winetricks" "${@:-${@}}")
 fi
 if [ "$JMN_NODLSSSWAP" != "1" ] && [ "$JMN_NODLSSSWAP" != "true" ] && [ "$JMN_NODLSSSWAP" != "yes" ]; then
 	export JMN_EXEC=("dlss-swapper" "${JMN_EXEC[@]}")
@@ -444,8 +398,8 @@ if ! [ -d "${WINEPREFIX}" ]; then
 	mkdir -pv "$WINEPREFIX"
 fi
 if [ -z "${STEAM_COMPAT_SHADER_PATH+x}" ]; then
-	if [ "$STEAM_COMPAT_DATA_PATH" == "$HOME/Games/__Userdata__/compatdata/Steam-Other/$SteamAppId" ]; then
-		STEAM_COMPAT_SHADER_PATH="$HOME/Games/__Apps__/Shader-Cache/Steam-Other/$SteamAppId"
+	if [ "$STEAM_COMPAT_DATA_PATH" == "$HOME/Games/__Userdata__/compatdata/Wine/$SteamAppId" ]; then
+		STEAM_COMPAT_SHADER_PATH="$HOME/Games/__Apps__/Shader-Cache/Wine/$SteamAppId"
 	else
 		STEAM_COMPAT_SHADER_PATH="$(realpath -q "$STEAM_COMPAT_DATA_PATH/../../shadercache/$SteamAppId")"
 	fi
@@ -881,5 +835,5 @@ echo ""
 echo "\"Executing:\""
 echo "\"${JMN_EXEC[*]}\""
 echo ""
-LD_PRELOAD="/home/jimmy/.local/share/Steam/ubuntu12_32/gameoverlayrenderer.so /home/jimmy/.local/share/Steam/ubuntu12_64/gameoverlayrenderer.so" "${JMN_EXEC[@]}"
+"${JMN_EXEC[@]}"
 environment-unset

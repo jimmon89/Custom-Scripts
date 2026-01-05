@@ -10,6 +10,20 @@ fi
 if [ -z "${JMN_LOCAL_PROTON+x}" ]; then
 	export JMN_LOCAL_PROTON="0"
 fi
+if [ -z "${STEAM_COMPAT_DATA_PATH+x}" ]; then
+	if [ -n "${WINEPREFIX+x}" ]; then
+		STEAM_COMPAT_DATA_PATH="$(realpath -q "$WINEPREFIX/..")"
+		export STEAM_COMPAT_DATA_PATH
+	elif [ -z "${WINEPREFIX+x}" ]; then
+		export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/Steam-Other/$SteamAppId"
+	fi
+fi
+if [ -z "${WINEPREFIX+x}" ]; then
+	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH/pfx"
+fi
+if [ -z "${WINEPREFIXDRIVEC+x}" ]; then
+	export WINEPREFIXDRIVEC="$WINEPREFIX/drive_c"
+fi
 if [ "$JMN_LOCAL_PROTON" = "1" ] || [ "$JMN_LOCAL_PROTON" = "true" ] || [ "$JMN_LOCAL_PROTON" = "yes" ]; then
 	PROTON_VERSION="$(< "${STEAM_COMPAT_DATA_PATH}/version" sed -n 1p)"
 	export PROTON_VERSION
@@ -17,6 +31,77 @@ if [ "$JMN_LOCAL_PROTON" = "1" ] || [ "$JMN_LOCAL_PROTON" = "true" ] || [ "$JMN_
 fi
 if [ -z "${PROTONPATH+x}" ]; then
 	export PROTONPATH="$PROTONCOMPATPATH"
+fi
+if [ -d "${PROTONCOMPATPATH}" ]; then
+	if [ -z "${WINESERVER+x}" ]; then
+		WINESERVER="$(find "$PROTONCOMPATPATH" -type f -wholename "*/bin/wineserver")"
+		export WINESERVER
+		if ! [ -f "${WINESERVER}" ]; then
+			unset WINESERVER
+		fi
+	fi
+	if [ -z "${WINE+x}" ]; then
+		WINE="$(find "$PROTONCOMPATPATH" -type f -wholename "*/bin/wine")"
+		export WINE
+		if ! [ -f "${WINE}" ]; then
+			unset WINE
+		fi
+	fi
+	if [ -z "${WINE64+x}" ]; then
+		WINE64="$(find "$PROTONCOMPATPATH" -type f -wholename "*/bin/wine64")"
+		export WINE64
+		if ! [ -f "${WINE64}" ]; then
+			unset WINE64
+		fi
+	fi
+	if [ -z "$WINEARCH" ]; then
+		WINE_ARCH=$(get_file_arch_dxvk "$WINE")
+		export WINE_ARCH
+		WINE64_ARCH=$(get_file_arch_dxvk "$WINE64")
+		export WINE64_ARCH
+		if [ -f "$WINEPREFIX"/system.reg ]; then
+			ARCH="$(grep "^#arch=win" "$WINEPREFIX"/system.reg)"
+			ARCH="${ARCH##*=}"
+			export ARCH
+		elif [ "$WINE_ARCH" == "x86_64" ] || [ "$WINE64_ARCH" == "x86_64" ]; then
+			export ARCH="win64"
+		elif [ "$WINE_ARCH" == "i386" ] && [ "$WINE64_ARCH" == "" ]; then
+			export ARCH="win32"
+		fi
+	else
+		export ARCH="$WINEARCH"
+	fi
+	if ! [ -f "$WINE64" ]; then
+		export WINE64="$WINE"
+	fi
+	if [ "$ARCH" == "win32" ]; then
+		export WINE64="$WINE"
+	fi
+	if [ -z "${WINE_PATH+x}" ]; then
+		WINE_PATH="$(dirname "$(which "$WINESERVER")")"
+		export WINE_PATH
+	fi
+	if [ -z "${WINEBOOT+x}" ]; then
+		WINEBOOT="$(find "$PROTONCOMPATPATH" -type f -wholename "*/bin/wineboot")"
+		export WINEBOOT
+		if ! [ -f "${WINEBOOT}" ]; then
+			unset WINEBOOT
+		fi
+	fi
+	if [ -z "${WINELOADER+x}" ]; then
+		if [ -f "${WINE64}" ]; then
+			export WINELOADER="$WINE64"
+		elif ! [ -f "${WINE64}" ]; then
+			if [ -f "${WINE}" ]; then
+				export WINELOADER="$WINE"
+			fi
+		fi
+		if ! [ -f "${WINELOADER}" ]; then
+			unset WINELOADER
+		fi
+	fi
+	WINE_VER="$($WINESERVER --version | grep Wine)"
+	export WINE_VER
 fi
 if [ -z "${SteamAppId+x}" ]; then
 	if [ -n "${APPID+x}" ]; then
@@ -29,16 +114,6 @@ if [ -z "${APPID+x}" ]; then
 	if [ -n "${SteamAppId+x}" ]; then
 		export APPID="$SteamAppId"
 	fi
-fi
-if [ -z "${STEAM_COMPAT_DATA_PATH+x}" ]; then
-	if [ -n "${WINEPREFIX+x}" ]; then
-		export STEAM_COMPAT_DATA_PATH="$WINEPREFIX"
-	elif [ -z "${WINEPREFIX+x}" ]; then
-		export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/Steam-Other/$SteamAppId"
-	fi
-fi
-if [ -z "${WINEPREFIX+x}" ]; then
-	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH/pfx"
 fi
 if [ "$APPID" == 0 ]; then
 	export UMU_STEAM_GAME_ID="$APPID"
@@ -372,77 +447,6 @@ get_file_arch_dxvk() {
 	esac
 	echo "${_W_file_arch}"
 }
-if [ -d "${PROTONCOMPATPATH}" ]; then
-	if [ -z "${WINESERVER+x}" ]; then
-		WINESERVER="$(find "$PROTONCOMPATPATH" -type f -wholename "*/bin/wineserver")"
-		export WINESERVER
-		if ! [ -f "${WINESERVER}" ]; then
-			unset WINESERVER
-		fi
-	fi
-	if [ -z "${WINE+x}" ]; then
-		WINE="$(find "$PROTONCOMPATPATH" -type f -wholename "*/bin/wine")"
-		export WINE
-		if ! [ -f "${WINE}" ]; then
-			unset WINE
-		fi
-	fi
-	if [ -z "${WINE64+x}" ]; then
-		WINE64="$(find "$PROTONCOMPATPATH" -type f -wholename "*/bin/wine64")"
-		export WINE64
-		if ! [ -f "${WINE64}" ]; then
-			unset WINE64
-		fi
-	fi
-	if [ -z "$WINEARCH" ]; then
-		WINE_ARCH=$(get_file_arch_dxvk "$WINE")
-		export WINE_ARCH
-		WINE64_ARCH=$(get_file_arch_dxvk "$WINE64")
-		export WINE64_ARCH
-		if [ -f "$WINEPREFIX"/system.reg ]; then
-			ARCH="$(grep "^#arch=win" "$WINEPREFIX"/system.reg)"
-			ARCH="${ARCH##*=}"
-			export ARCH
-		elif [ "$WINE_ARCH" == "x86_64" ] || [ "$WINE64_ARCH" == "x86_64" ]; then
-			export ARCH="win64"
-		elif [ "$WINE_ARCH" == "i386" ] && [ "$WINE64_ARCH" == "" ]; then
-			export ARCH="win32"
-		fi
-	else
-		export ARCH="$WINEARCH"
-	fi
-	if ! [ -f "$WINE64" ]; then
-		export WINE64="$WINE"
-	fi
-	if [ "$ARCH" == "win32" ]; then
-		export WINE64="$WINE"
-	fi
-	if [ -z "${WINE_PATH+x}" ]; then
-		WINE_PATH="$(dirname "$(which "$WINESERVER")")"
-		export WINE_PATH
-	fi
-	if [ -z "${WINEBOOT+x}" ]; then
-		WINEBOOT="$(find "$PROTONCOMPATPATH" -type f -wholename "*/bin/wineboot")"
-		export WINEBOOT
-		if ! [ -f "${WINEBOOT}" ]; then
-			unset WINEBOOT
-		fi
-	fi
-	if [ -z "${WINELOADER+x}" ]; then
-		if [ -f "${WINE64}" ]; then
-			export WINELOADER="$WINE64"
-		elif ! [ -f "${WINE64}" ]; then
-			if [ -f "${WINE}" ]; then
-				export WINELOADER="$WINE"
-			fi
-		fi
-		if ! [ -f "${WINELOADER}" ]; then
-			unset WINELOADER
-		fi
-	fi
-	WINE_VER="$($WINESERVER --version | grep Wine)"
-	export WINE_VER
-fi
 if [ -z "${DXVK_PATH+x}" ]; then
 	export DXVK_PATH="/usr/share/dxvk"
 fi
@@ -687,7 +691,6 @@ install_dxvk() {
 	fi
 }
 fixwineprefix() {
-	export WINEPREFIXDRIVEC="$WINEPREFIX/drive_c"
 	if [ -f "${WINEBOOT}" ]; then
 		"$WINE64" "${WINEBOOT}" -u
 	fi

@@ -4,7 +4,7 @@ if [ -z "${SteamAppId+x}" ]; then
 	if [ -n "${APPID+x}" ]; then
 		export SteamAppId="$APPID"
 	elif [ -z "${APPID+x}" ]; then
-		export SteamAppId="0"
+		export SteamAppId="default"
 	fi
 fi
 if [ -z "${APPID+x}" ]; then
@@ -13,18 +13,17 @@ if [ -z "${APPID+x}" ]; then
 	fi
 fi
 if [ -z "${PROTON_DEBUG_DIR+x}" ]; then
-	export PROTON_DEBUG_DIR="$HOME/Games/__Apps__/Proton-Cache"
+	export PROTON_DEBUG_DIR="$HOME/Games/__Apps__/Wine-Cache"
 fi
 if [ -z "${STEAM_COMPAT_DATA_PATH+x}" ]; then
 	if [ -n "${WINEPREFIX+x}" ]; then
-		STEAM_COMPAT_DATA_PATH="$(realpath -q "$WINEPREFIX/..")"
-		export STEAM_COMPAT_DATA_PATH
+		export STEAM_COMPAT_DATA_PATH="$WINEPREFIX"
 	elif [ -z "${WINEPREFIX+x}" ]; then
-		export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/Steam-Other/$SteamAppId"
+		export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/Wine/$SteamAppId"
 	fi
 fi
 if [ -z "${WINEPREFIX+x}" ]; then
-	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH/pfx"
+	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH"
 fi
 if [ -z "${STEAM_COMPAT_INSTALL_PATH+x}" ]; then
 	export STEAM_COMPAT_INSTALL_PATH="$STEAM_COMPAT_DATA_PATH"
@@ -100,7 +99,7 @@ if [ "$JMN_WATCH_LOG" = "1" ] || [ "$JMN_WATCH_LOG" = "true" ] || [ "$JMN_WATCH_
 	 } >> "$LOG_DIR/prep.log"
 	alacritty --title "Game Output" --command tail --silent --follow=name --lines=+1 "$LOG_DIR/prep.log" &
 fi
-environment-proton-wrapped "${@:-${@}}" &>> "$LOG_DIR/prep.log"
+environment-wine-winetricks-wrapped "${@:-${@}}" &>> "$LOG_DIR/prep.log"
 sed -i "/ERROR. ld\.so. object '.home.jimmy.\.local.share.Steam..*.gameoverlayrenderer\.so' from LD_PRELOAD cannot be preloaded .wrong ELF class. .*.. ignored\./d" "$LOG_DIR/prep.log"
 sed -i "/pid .* .. .*, skipping destruction .fork without exec../d" "$LOG_DIR/prep.log"
 sed -i "/wineserver. using server.side synchronization./d" "$LOG_DIR/prep.log"
