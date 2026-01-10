@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+export LD_PRELOAD_TMP="$LD_PRELOAD"
 export LD_PRELOAD=""
 if [ -z "${SteamAppId+x}" ]; then
 	if [ -n "${APPID+x}" ]; then
@@ -99,6 +100,7 @@ if [ "$JMN_WATCH_LOG" = "1" ] || [ "$JMN_WATCH_LOG" = "true" ] || [ "$JMN_WATCH_
 	 } >> "$LOG_DIR/prep.log"
 	alacritty --title "Game Output" --command tail --silent --follow=name --lines=+1 "$LOG_DIR/prep.log" &
 fi
+export LD_PRELOAD="$LD_PRELOAD_TMP"
 EDHM-UI-wrapped "${@:-${@}}" &>> "$LOG_DIR/prep.log"
 sed -i "/ERROR. ld\.so. object '.home.jimmy.\.local.share.Steam..*.gameoverlayrenderer\.so' from LD_PRELOAD cannot be preloaded .wrong ELF class. .*.. ignored\./d" "$LOG_DIR/prep.log"
 sed -i "/pid .* .. .*, skipping destruction .fork without exec../d" "$LOG_DIR/prep.log"

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+export LD_PRELOAD_TMP="$LD_PRELOAD"
 export LD_PRELOAD=""
 if [ -z "${PROTONCOMPATPATH+x}" ]; then
 	if [ -z "${PROTONPATH+x}" ]; then
@@ -836,5 +837,6 @@ echo "\"Executing:\""
 echo "\"${JMN_EXEC[*]}\""
 echo ""
 pushd "${WINEPREFIXDRIVEC}/users/jimmy/AppData/Local/EDHM-UI-V3" || exit
+export LD_PRELOAD="$LD_PRELOAD_TMP"
 "${JMN_EXEC[@]}"
 environment-unset

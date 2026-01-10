@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+export LD_PRELOAD_TMP="$LD_PRELOAD"
 export LD_PRELOAD=""
 if [ -z "${PROTONCOMPATPATH+x}" ]; then
 	if [ -z "${PROTONPATH+x}" ]; then
@@ -835,5 +836,6 @@ echo ""
 echo "\"Executing:\""
 echo "\"${JMN_EXEC[*]}\""
 echo ""
+export LD_PRELOAD="$LD_PRELOAD_TMP"
 "${JMN_EXEC[@]}"
 environment-unset
