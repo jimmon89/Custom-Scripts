@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+export LD_PRELOAD_TMP="$LD_PRELOAD"
 export LD_PRELOAD=""
 read_runner() {
 	orig_nocasematch=$(shopt -p nocasematch; true)
@@ -881,5 +882,6 @@ echo ""
 echo "\"Executing:\""
 echo "\"${JMN_EXEC[*]}\""
 echo ""
-LD_PRELOAD="/home/jimmy/.local/share/Steam/ubuntu12_32/gameoverlayrenderer.so /home/jimmy/.local/share/Steam/ubuntu12_64/gameoverlayrenderer.so" "${JMN_EXEC[@]}"
+export LD_PRELOAD="$LD_PRELOAD_TMP"
+"${JMN_EXEC[@]}"
 environment-unset

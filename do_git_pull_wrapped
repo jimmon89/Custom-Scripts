@@ -2,6 +2,7 @@
 
 # shellcheck disable=SC3044
 pushd "${1}" || exit
+git reset --hard HEAD
 git fetch
 if [ ! -z "$2" ]; then
     git switch "${2}"

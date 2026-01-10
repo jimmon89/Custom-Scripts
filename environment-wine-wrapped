@@ -316,16 +316,16 @@ fi
 #fi
 if [ -z "${JMN_EXEC+x}" ]; then
 	if ! [ -f "$(which gamemoderun 2>/dev/null)" ] && [ -f "$(which game-performance 2>/dev/null)" ]; then
-		export JMN_EXEC=("game-performance" "${WINE}" "${@:-${@}}")
+		export JMN_EXEC=("game-performance" "${@:-${@}}")
 	elif [ -f "$(which gamemoderun 2>/dev/null)" ] && [ -f "$(which game-performance 2>/dev/null)" ]; then
-		export JMN_EXEC=("game-performance" "${WINE}" "${@:-${@}}")
+		export JMN_EXEC=("game-performance" "${@:-${@}}")
 	elif [ -f "$(which gamemoderun 2>/dev/null)" ] && ! [ -f "$(which game-performance 2>/dev/null)" ]; then
-		export JMN_EXEC=("gamemoderun" "${WINE}" "${@:-${@}}")
+		export JMN_EXEC=("gamemoderun" "${@:-${@}}")
 	elif ! [ -f "$(which gamemoderun 2>/dev/null)" ] && ! [ -f "$(which game-performance 2>/dev/null)" ]; then
-		export JMN_EXEC=("${WINE}" "${@:-${@}}")
+		export JMN_EXEC=("${@:-${@}}")
 	fi
 elif [ -n "${JMN_EXEC+x}" ]; then
-	export JMN_EXEC=("${JMN_EXEC[@]}" "${WINE}" "${@:-${@}}")
+	export JMN_EXEC=("${JMN_EXEC[@]}" "${@:-${@}}")
 fi
 if [ "$JMN_NODLSSSWAP" != "1" ] && [ "$JMN_NODLSSSWAP" != "true" ] && [ "$JMN_NODLSSSWAP" != "yes" ]; then
 	export JMN_EXEC=("dlss-swapper" "${JMN_EXEC[@]}")
