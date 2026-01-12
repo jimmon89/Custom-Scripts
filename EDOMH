@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 cd "$HOME/Games/__Tools__/EDOMH" || exit
 chmod -R +x .
 "bin/Elite Dangerous Odyssey Materials Helper Launcher"

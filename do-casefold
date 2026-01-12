@@ -2,7 +2,7 @@
 shopt -s extglob
 OIFS="$IFS"
 IFS=$(echo -en "\n\b")
-if [ ! -d "$1" ]; then
+if [[ ! -d "$1" ]]; then
 	echo "ERROR:"
 	echo "$1 is not a directory..."
 	exit
@@ -10,17 +10,17 @@ fi
 JMN_TEMP_DIRECTORY="${1%%+(/)}"
 while :
 do
-	if [ ! -e "$JMN_TEMP_DIRECTORY" ]; then
+	if [[ ! -e "$JMN_TEMP_DIRECTORY" ]]; then
 		break
 	fi
 	JMN_TEMP_DIRECTORY="$JMN_TEMP_DIRECTORY""_"
 done
 echo "Using $JMN_TEMP_DIRECTORY as temporary directory name..."
-if [ -d "$1" ]; then 
+if [[ -d "$1" ]]; then 
 	DIRECTORIES=$(find "$1" -type d)
 	for D in $DIRECTORIES
 	do
-		if [ ! -h "$D" ]; then
+		if [[ ! -h "$D" ]]; then
 			mkdir -pv "$JMN_TEMP_DIRECTORY/$(realpath -s --relative-to="$1" "$D")"/
 			chattr +F "$JMN_TEMP_DIRECTORY/$(realpath -s --relative-to="$1" "$D")"/
 		fi
@@ -28,7 +28,7 @@ if [ -d "$1" ]; then
 	FILES=$(find "$1" -type f)
 	for F in $FILES
 	do
-		if [ ! -h "$F" ]; then
+		if [[ ! -h "$F" ]]; then
 			mv -v "$F" "$JMN_TEMP_DIRECTORY/$(realpath -s --relative-to="$1" "$F")"
 		fi
 	done
@@ -40,11 +40,11 @@ if [ -d "$1" ]; then
 	find "$1" -type d -empty -delete
 fi
 
-if ! [ -e "$1" ]; then 
+if ! [[ -e "$1" ]]; then 
 	mv -v "$JMN_TEMP_DIRECTORY" "$1"
 	echo "SUCCESS:"
 	echo "Task Complete..."
-elif [ -e "$1" ]; then 
+elif [[ -e "$1" ]]; then 
 	echo "ERROR:"
 	echo "Something went wrong with the process..."
 fi

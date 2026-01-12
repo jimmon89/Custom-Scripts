@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 cd "/home/jimmy/Documents/qbittorrent/" || exit
 curl -O http://upd.emule-security.org/ipfilter.zip
 unzip ./ipfilter.zip

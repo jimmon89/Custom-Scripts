@@ -11,7 +11,7 @@ TMPDIR="${EDMC_DIR}/tmp"
 
 mkdir -p "${TMPDIR}"
 
-if [ -n "${JMN_UPDATE+x}" ]; then 
+if [[ -n "${JMN_UPDATE+x}" ]]; then 
 	do_git_pull "$ED_DIR/BioScan"
 	do_git_pull "$ED_DIR/ExploData"
 	do_git_pull "$ED_DIR/NavRoute"
@@ -40,7 +40,7 @@ python3 -m venv Python
 # shellcheck disable=SC1091
 source "$EDMC_DATA_DIR/Python/bin/activate"
 
-if [ -n "${JMN_UPDATE+x}" ]; then
+if [[ -n "${JMN_UPDATE+x}" ]]; then
 	python3 -m pip install pip
 	python3 -m pip install --upgrade pip
 	python3 -m pip install playsound3

@@ -2,7 +2,7 @@
 OIFS="$IFS"
 IFS=$(echo -en "\n\b")
 
-if [ -d "$1" ]; then 
+if [[ -d "$1" ]]; then 
 	FOLDERS=$(find "$1" -type d -wholename "*/drive_c")
 	for F in $FOLDERS
 	do

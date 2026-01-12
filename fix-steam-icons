@@ -15,7 +15,7 @@ IFS=$'\n'
 FIX_INVALID_NAME='.*].*$'
 NO_MATCH_GAME_ID='^Icon[[:space:]]*=[[:space:]]*steam$'
 
-if [ "${1,,}" == "help" ] || [ "${2,,}" == "help" ] || [ "${3,,}" == "help" ]
+if [[ "${1,,}" == "help" ]] || [[ "${2,,}" == "help" ]] || [[ "${3,,}" == "help" ]]
 then
 	echo "other than $HELP_ARGUMENT, this script accepts up to two other arguments simultaneously, notably $DOWNLOAD_ARGUMENT, and $OVERWRITE_ARGUEMENT"
 	echo "however, $HELP_ARGUMENT will always print this message, and then exit without performing any other tasks"
@@ -27,7 +27,7 @@ then
 fi
 
 read_ids() {
-	if [ ! -h "$1" ] && ! [[ $1 =~ $FIX_INVALID_NAME ]]
+	if [[ ! -h "$1" ]] && ! [[ $1 =~ $FIX_INVALID_NAME ]]
 	then
 		while IFS= read -r line
 		do
@@ -46,7 +46,7 @@ read_ids() {
 }
 
 download_icons() {
-	if [ -n "${NO_SPACE_GAME_ID}" ] && [[ "$NO_SPACE_GAME_ID" =~ ^[0-9][0-9]*$ ]] && ! [[ "$NO_SPACE_GAME_ID" =~ ^[[:space:]][[:space:]]*$ ]]
+	if [[ -n "${NO_SPACE_GAME_ID}" ]] && [[ "$NO_SPACE_GAME_ID" =~ ^[0-9][0-9]*$ ]] && ! [[ "$NO_SPACE_GAME_ID" =~ ^[[:space:]][[:space:]]*$ ]]
 	then
 		echo "Downloading icon for $NO_SPACE_GAME_ID"
 		SGDBoop "sgdb://boop/steam/${NO_SPACE_GAME_ID}-clienticon-en"
@@ -56,7 +56,7 @@ download_icons() {
 }
 
 set_icons() {
-	if [ -n "${NO_SPACE_GAME_ID}" ] && [[ "$NO_SPACE_GAME_ID" =~ ^[0-9][0-9]*$ ]] && ! [[ "$NO_SPACE_GAME_ID" =~ ^[[:space:]][[:space:]]*$ ]]
+	if [[ -n "${NO_SPACE_GAME_ID}" ]] && [[ "$NO_SPACE_GAME_ID" =~ ^[0-9][0-9]*$ ]] && ! [[ "$NO_SPACE_GAME_ID" =~ ^[[:space:]][[:space:]]*$ ]]
 	then
 		if [[ "$1" =~ $NO_MATCH_GAME_ID ]]
 		then
@@ -74,7 +74,7 @@ DESKTOP_ENTRIES=$(find "$DESKTOP_FILE_LOCATION" -name "*.desktop")
 APPLICATION_ENTRIES=$(find "$APPLICATION_FILE_LOCATION" -name "*.desktop")]
 STEAM_ASSETS=$(find "$STEAM_ASSET_PATH" -name "*_icon.*")
 
-if [ "${1,,}" == "download" ] || [ "${2,,}" == "download" ]
+if [[ "${1,,}" == "download" ]] || [[ "${2,,}" == "download" ]]
 then
 	for D in $DESKTOP_ENTRIES
 	do
@@ -88,10 +88,10 @@ then
 		download_icons "$A"
 	done
 
-elif ! [ "${1,,}" == "download" ] && ! [ "${2,,}" == "download" ]
+elif ! [[ "${1,,}" == "download" ]] && ! [[ "${2,,}" == "download" ]]
 then
 	echo "download flag not set, skipping donwload of icons..."
-elif [ "${1,,}" == "download" ] && [ "${2,,}" == "download" ]
+elif [[ "${1,,}" == "download" ]] && [[ "${2,,}" == "download" ]]
 then
 	if ! command -v SGDBoop >/dev/null 2>&1
 	then
@@ -99,13 +99,6 @@ then
 		exit 1
 	fi
 fi
-
-	echo "SGDBoop is missing"
-if ! command -v basename >/dev/null 2>&1
-then
-	UTIL_EXISTS="0"
-fi
-
 if ! command -v identify >/dev/null 2>&1
 then
 	UTIL_EXISTS="0"
@@ -116,7 +109,7 @@ then
 	UTIL_EXISTS="0"
 fi
 
-if [ "$UTIL_EXISTS" == "0" ]
+if [[ "$UTIL_EXISTS" == "0" ]]
 then	
 	if exists apt
 	then
@@ -132,40 +125,34 @@ then
 		PACKAGE_MANAGER="pacman"
 	fi
 
-	echo "WARNING: Missing 'imagemagick' and/or 'coreutils', attempting to detect system package manager and then install the missing packages..."
+	echo "WARNING: Missing 'imagemagick', attempting to detect system package manager and then install the missing package..."
 	case "$PACKAGE_MANAGER" in
 		"apt")
 			echo "Detected apt..."
 			sudo apt update
-			sudo apt install coreutils imagemagick
+			sudo apt install imagemagick
 			;;
 		"dnf")
 			echo "Detected dnf..."
 			sudo dnf upgrade
-			sudo dnf install coreutils ImageMagick
+			sudo dnf install ImageMagick
 			;;
 		"yum")
 			echo "Detected yum..."
 			sudo yum update
-			sudo yum install coreutils ImageMagick
+			sudo yum install ImageMagick
 			;;
 		"pacman")
 			echo "Detected pacman..."
 			sudo pacman -Syu
-			sudo pacman -Sy imagemagick coreutils
+			sudo pacman -Sy imagemagick
 			;;
 		*)
 			echo "ERROR: Unable to detect package manager..."
-			echo "please find and install 'basename', possibly a part of 'coreutils' and, 'identify' and 'mogrify', possibly a part of 'imagemagick', according to your distributions instructions"
+			echo "please find and install 'identify' and 'mogrify', possibly a part of 'imagemagick', according to your distributions instructions"
 			exit 1
 			;;
 	esac
-	
-	if ! command -v basename >/dev/null 2>&1
-	then
-		echo "ERROR: Still missing 'basename' and/or 'coreutils', please find the package containing it and use your system package manager to install the missing package..."
-		exit 1
-	fi
 	
 	if ! command -v identify >/dev/null 2>&1
 	then
@@ -186,29 +173,30 @@ for S in $STEAM_ASSETS
 do
 	IMG_FORMAT="$(file -i -b "$S" | sed -e 's/;.*//')"
 	IMG_FORMAT="${IMG_FORMAT//image\//}"
-	BASENAME_NO_EXT="$(basename "${S%.*}")"
+	NO_EXT="${S%.*}"
+	BASEPATH_NO_EXT="${NO_EXT##*/}"
 	case "$IMG_FORMAT" in  
 		"png")
-			echo "$S is already a .png, moving to ${TMPFILE_PATH} and renaming to ${BASENAME_NO_EXT}.png"
-			cp -v -T "$S" "${TMPFILE_PATH}${BASENAME_NO_EXT}.png"
+			echo "$S is already a .png, moving to ${TMPFILE_PATH} and renaming to ${BASEPATH_NO_EXT}.png"
+			cp -v -T "$S" "${TMPFILE_PATH}${BASEPATH_NO_EXT}.png"
 			;; 
 		"jpeg")
-			echo "$S is a .jpg, not a .png, moving to ${TMPFILE_PATH} and converting to ${BASENAME_NO_EXT}.png"
-			cp -v -T "$S" "${TMPFILE_PATH}${BASENAME_NO_EXT}.jpg"
-			mogrify -quiet -auto-orient -format png "${TMPFILE_PATH}${BASENAME_NO_EXT}.jpg"
-			rm -v "${TMPFILE_PATH}${BASENAME_NO_EXT}.jpg"
+			echo "$S is a .jpg, not a .png, moving to ${TMPFILE_PATH} and converting to ${BASEPATH_NO_EXT}.png"
+			cp -v -T "$S" "${TMPFILE_PATH}${BASEPATH_NO_EXT}.jpg"
+			mogrify -quiet -auto-orient -format png "${TMPFILE_PATH}${BASEPATH_NO_EXT}.jpg"
+			rm -v "${TMPFILE_PATH}${BASEPATH_NO_EXT}.jpg"
 			;; 
 		"x-tga")
-			echo "$S is a .tga, not a .png, moving to ${TMPFILE_PATH} and converting to ${BASENAME_NO_EXT}.png"
-			cp -v -T "$S" "${TMPFILE_PATH}${BASENAME_NO_EXT}.tga"
-			mogrify -quiet -auto-orient -format png "${TMPFILE_PATH}${BASENAME_NO_EXT}.tga"
-			rm -v "${TMPFILE_PATH}${BASENAME_NO_EXT}.tga"
+			echo "$S is a .tga, not a .png, moving to ${TMPFILE_PATH} and converting to ${BASEPATH_NO_EXT}.png"
+			cp -v -T "$S" "${TMPFILE_PATH}${BASEPATH_NO_EXT}.tga"
+			mogrify -quiet -auto-orient -format png "${TMPFILE_PATH}${BASEPATH_NO_EXT}.tga"
+			rm -v "${TMPFILE_PATH}${BASEPATH_NO_EXT}.tga"
 			;; 
 		"vnd.microsoft.icon")
-			echo "$S is a .ico, not a .png, moving to ${TMPFILE_PATH} and converting to ${BASENAME_NO_EXT}.png"
-			cp -v -T "$S" "${TMPFILE_PATH}${BASENAME_NO_EXT}.ico"
-			mogrify -quiet -auto-orient -format png "${TMPFILE_PATH}${BASENAME_NO_EXT}.ico"
-			rm -v "${TMPFILE_PATH}${BASENAME_NO_EXT}.ico"
+			echo "$S is a .ico, not a .png, moving to ${TMPFILE_PATH} and converting to ${BASEPATH_NO_EXT}.png"
+			cp -v -T "$S" "${TMPFILE_PATH}${BASEPATH_NO_EXT}.ico"
+			mogrify -quiet -auto-orient -format png "${TMPFILE_PATH}${BASEPATH_NO_EXT}.ico"
+			rm -v "${TMPFILE_PATH}${BASEPATH_NO_EXT}.ico"
 			;;
 		*)
 			echo "$S has unknown image format $IMG_FORMAT"
@@ -221,33 +209,34 @@ for P in $PNG_FILES
 do
 	IMG_WIDTH="$(identify -format '%w' "$P")"
 	IMG_HEIGHT="$(identify -format '%h' "$P")"
-	NO_DIGIT_FILENAME="$(basename "$P" | sed "s/-[[:digit:]]\+//")"
+	NO_DIGIT_BASEPATH="${P##*/}"
+	NO_DIGIT_FILENAME="${NO_DIGIT_BASEPATH//[0-9]/}"
 	NO_ICON_FILENAME="${NO_DIGIT_FILENAME//_icon/}"
 	FULL_NEW_FILENAME="steam_icon_$NO_ICON_FILENAME"
 	NEW_PATHNAME="${ICON_PATH}hicolor/${IMG_WIDTH}x${IMG_HEIGHT}/apps/"
 	FINAL_FILENAME="${NEW_PATHNAME}${FULL_NEW_FILENAME}"
 	echo "image is ${IMG_WIDTH}x${IMG_HEIGHT}"
-	if ! [ -e "$NEW_PATHNAME" ]
+	if ! [[ -e "$NEW_PATHNAME" ]]
 	then
 		mkdir -v -p "$NEW_PATHNAME"
 	fi
 	
-	if [ "${1,,}" == "overwrite" ] || [ "${2,,}" == "overwrite" ]
+	if [[ "${1,,}" == "overwrite" ]] || [[ "${2,,}" == "overwrite" ]]
 	then
-		if [ -e "$FINAL_FILENAME" ]
+		if [[ -e "$FINAL_FILENAME" ]]
 		then
 			echo "$FINAL_FILENAME exists, and overwrite flag is set... moving and overwriting..."
-		elif ! [ -e "$FINAL_FILENAME" ]
+		elif ! [[ -e "$FINAL_FILENAME" ]]
 		then
 			echo "$FINAL_FILENAME does not exist... moving..."
 		fi
 		mv -v -f "$P" "$FINAL_FILENAME"
 	else
-		if [ -e "$FINAL_FILENAME" ]
+		if [[ -e "$FINAL_FILENAME" ]]
 		then
 			echo "$FINAL_FILENAME exists, and overwrite flag is not set... ignoring..."
 			rm -v "$FINAL_FILENAME"
-		elif ! [ -e "$FINAL_FILENAME" ]
+		elif ! [[ -e "$FINAL_FILENAME" ]]
 		then
 			echo "$FINAL_FILENAME does not exist... moving..."
 			mv -v -n "$P" "$FINAL_FILENAME"
@@ -256,7 +245,7 @@ do
 done
 
 rmdir "$TMPFILE_PATH"
-if [ -e "$TMPFILE_PATH" ]
+if [[ -e "$TMPFILE_PATH" ]]
 then
 	rm -v -r -f "$TMPFILE_PATH"
 fi

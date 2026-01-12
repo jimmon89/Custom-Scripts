@@ -2,24 +2,24 @@
 
 clear
 
-if [ -z "${2+x}" ] ; then
+if [[ -z "${2+x}" ]] ; then
 	printf 'ERROR:\t%s\n' "Must pass a directory as a second argument" | expand -t 2
 	printf 'REASON:\t%s\n' "Second argument is missing" | expand -t 2
 	exit "255"
-elif [ -n "${2+x}" ] ; then
+elif [[ -n "${2+x}" ]] ; then
 	PARENT_DIR="$(realpath -q "$2/..")"
-	if [ -f "$2" ] ; then
+	if [[ -f "$2" ]] ; then
 		printf 'ERROR:\t%s\n' "Must pass a directory as a second argument" | expand -t 2
 		printf 'REASON:\t%s\n' "$2 exists and is a file" | expand -t 2
 		exit "255"
-	elif [ ! -d "$PARENT_DIR" ] ; then
+	elif [[ ! -d "$PARENT_DIR" ]] ; then
 		printf 'ERROR:\t%s\n' "Must pass a directory as a second argument" | expand -t 2
 		printf 'REASON:\t%s\n' "$2 is not a valid directory location" | expand -t 2
 		exit "255"
-	elif [ -d "$PARENT_DIR" ] ; then
+	elif [[ -d "$PARENT_DIR" ]] ; then
 		printf 'Parent Dir:\t%s\n' "$(realpath -q "$PARENT_DIR")" | expand -t 14
-		if [ -d "$2" ]; then
-			if [ -L "$2" ] ; then
+		if [[ -d "$2" ]]; then
+			if [[ -L "$2" ]] ; then
 				printf 'Base Dir:\t%s\n' "Is Symlink, but this is okay" | expand -t 14
 			fi
 			printf 'Base Dir:\t%s\n' "$(realpath -q "$2")" | expand -t 14
@@ -31,17 +31,17 @@ fi
 
 ATTEMPT_COUNT=1
 
-if [ "$1" != "anomaly-install" ] && [ "$1" != "check-anomaly" ] && [ "$1" != "check-md5" ] && [ "$1" != "full-install" ] && [ "$1" != "remove-reshade" ] && [ "$1" != "purge-shader-cache" ] && [ "$1" != "usvfs-workaround" ] && [ "$1" != "test-mod-maker" ] && [ "$1" != "gamma-setup" ] ; then
+if [[ "$1" != "anomaly-install" ]] && [[ "$1" != "check-anomaly" ]] && [[ "$1" != "check-md5" ]] && [[ "$1" != "full-install" ]] && [[ "$1" != "remove-reshade" ]] && [[ "$1" != "purge-shader-cache" ]] && [[ "$1" != "usvfs-workaround" ]] && [[ "$1" != "test-mod-maker" ]] && [[ "$1" != "gamma-setup" ]] ; then
 	"$(which gamma-launcher)" -h
 		
-elif [ "$1" == "anomaly-install" ] || [ "$1" == "check-anomaly" ] || [ "$1" == "remove-reshade" ] || [ "$1" == "purge-shader-cache" ] ; then
-	while [ "$STATUS" != 0 ]
+elif [[ "$1" == "anomaly-install" ]] || [[ "$1" == "check-anomaly" ]] || [[ "$1" == "remove-reshade" ]] || [[ "$1" == "purge-shader-cache" ]] ; then
+	while [[ "$STATUS" != 0 ]]
 	do
 		printf 'Anomaly Dir: \t%s\n' "$(realpath -q "$2/anomaly")" | expand -t 14
 		mkdir -p "$(realpath -q "$2/anomaly")"
 		"$(which gamma-launcher)" "$1" --anomaly "$(realpath -q "$2/anomaly")"
 		STATUS=$?
-		if [ "$STATUS" != 0 ] ; then
+		if [[ "$STATUS" != 0 ]] ; then
 			((ATTEMPT_COUNT++))
 			echo "ERROR: The command did not complete successfully"
 			echo "Error Code: $STATUS"
@@ -52,14 +52,14 @@ elif [ "$1" == "anomaly-install" ] || [ "$1" == "check-anomaly" ] || [ "$1" == "
 		fi
 	done
 
-elif [ "$1" == "check-md5" ] || [ "$1" == "test-mod-maker" ] || [ "$1" == "gamma-setup" ] ; then
-	while [ "$STATUS" != 0 ]
+elif [[ "$1" == "check-md5" ]] || [[ "$1" == "test-mod-maker" ]] || [[ "$1" == "gamma-setup" ]] ; then
+	while [[ "$STATUS" != 0 ]]
 	do
 		printf 'Gamma Dir: \t%s\n' "$(realpath -q "$2/gamma")" | expand -t 14
 		mkdir -p "$(realpath -q "$2/gamma")"
 		"$(which gamma-launcher)" "$1" --gamma "$(realpath -q "$2/gamma")"
 		STATUS=$?
-		if [ "$STATUS" != 0 ] ; then
+		if [[ "$STATUS" != 0 ]] ; then
 			((ATTEMPT_COUNT++))
 			echo "ERROR: The command did not complete successfully"
 			echo "Error Code: $STATUS"
@@ -71,8 +71,8 @@ elif [ "$1" == "check-md5" ] || [ "$1" == "test-mod-maker" ] || [ "$1" == "gamma
 	done
 
 
-elif [ "$1" == "full-install" ] ; then
-	while [ "$STATUS" != 0 ]
+elif [[ "$1" == "full-install" ]] ; then
+	while [[ "$STATUS" != 0 ]]
 	do
 		printf 'Anomaly Dir: \t%s\n' "$(realpath -q "$2/anomaly")" | expand -t 14
 		printf 'Gamma Dir: \t%s\n' "$(realpath -q "$2/gamma")" | expand -t 14
@@ -82,7 +82,7 @@ elif [ "$1" == "full-install" ] ; then
 		mkdir -p "$(realpath -q "$2/cache")"
 		"$(which gamma-launcher)" "$1" --anomaly "$(realpath -q "$2/anomaly")" --gamma "$(realpath -q "$2/gamma")" --cache-directory "$(realpath -q "$2/cache")"
 		STATUS=$?
-		if [ "$STATUS" != 0 ] ; then
+		if [[ "$STATUS" != 0 ]] ; then
 			((ATTEMPT_COUNT++))
 			echo "ERROR: The command did not complete successfully"
 			echo "Error Code: $STATUS"
@@ -94,8 +94,8 @@ elif [ "$1" == "full-install" ] ; then
 	done
 
 
-elif [ "$1" == "usvfs-workaround" ] ; then
-	while [ "$STATUS" != 0 ]
+elif [[ "$1" == "usvfs-workaround" ]] ; then
+	while [[ "$STATUS" != 0 ]]
 	do
 		printf 'Anomaly Dir: \t%s\n' "$(realpath -q "$2/anomaly")" | expand -t 14
 		printf 'Gamma Dir: \t%s\n' "$(realpath -q "$2/gamma")" | expand -t 14
@@ -105,7 +105,7 @@ elif [ "$1" == "usvfs-workaround" ] ; then
 		mkdir -p "$(realpath -q "$2/final")"
 		"$(which gamma-launcher)" "$1" --anomaly "$(realpath -q "$2/anomaly")" --gamma "$(realpath -q "$2/gamma")" --final "$(realpath -q "$2/final")"
 		STATUS=$?
-		if [ "$STATUS" != 0 ] ; then
+		if [[ "$STATUS" != 0 ]] ; then
 			((ATTEMPT_COUNT++))
 			echo "ERROR: The command did not complete successfully"
 			echo "Error Code: $STATUS"
@@ -118,7 +118,7 @@ elif [ "$1" == "usvfs-workaround" ] ; then
 
 	
 fi
-if [ "$STATUS" == 0 ] ; then
+if [[ "$STATUS" == 0 ]] ; then
 	echo "SUCCESS: The command completed successfully"
 	echo "Attempt Number: $ATTEMPT_COUNT"
 fi
