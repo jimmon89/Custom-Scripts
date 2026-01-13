@@ -11,58 +11,74 @@ TMPDIR="${EDMC_DIR}/tmp"
 
 mkdir -p "${TMPDIR}"
 
-if [[ -n "${JMN_UPDATE+x}" ]]; then 
-	do_git_pull "$ED_DIR/BioScan"
-	do_git_pull "$ED_DIR/ExploData"
-	do_git_pull "$ED_DIR/NavRoute"
-	do_git_pull "$ED_DIR/Pioneer"
-	do_git_pull "$ED_DIR/EDMC_SpanshRouter"
-	do_git_pull "$ED_DIR/EDMC-Canonn"
-	do_git_pull "$ED_DIR/EDMC-Discord-Presence"
-	do_git_pull "$ED_DIR/EDMC-FuelStatus"
-	do_git_pull "$ED_DIR/LandingPad"
-	do_git_pull "$EDMC_DIR" "stable"
-	SOLUTION_FILES="$(find "$EDMC_PLUGINS" "$ED_DIR" -type f -name "*.sln")"
-	for F in $SOLUTION_FILES
-	do
-		nuget restore "$F"
-	done
-	mkdir -p "$EDMC_DATA_DIR"
-	cd "$EDMC_DATA_DIR" || exit
-	pyenv install --skip-existing "$(cat "${EDMC_DIR}/.python-version")"
-	pyenv local "$(cat "${EDMC_DIR}/.python-version")"
-fi
+do_git_pull "$ED_DIR/BioScan"
+do_git_pull "$ED_DIR/ExploData"
+do_git_pull "$ED_DIR/NavRoute"
+do_git_pull "$ED_DIR/Pioneer"
+do_git_pull "$ED_DIR/EDMC_SpanshRouter"
+do_git_pull "$ED_DIR/EDMC-Canonn"
+do_git_pull "$ED_DIR/EDMC-Discord-Presence"
+do_git_pull "$ED_DIR/EDMC-FuelStatus"
+do_git_pull "$ED_DIR/LandingPad"
+do_git_pull "$ED_DIR/EDMCModernOverlay"
+do_git_pull "$EDMC_DIR" "stable"
 
+SOLUTION_FILES="$(find "$EDMC_PLUGINS" "$ED_DIR" -type f -name "*.sln")"
+for F in $SOLUTION_FILES
+do
+	nuget restore "$F"
+done
+
+pushd "$ED_DIR/EDMCModernOverlay" || exit
+rm -fv "$ED_DIR/install_linux.sh"
+rm -fv "$ED_DIR/install_matrix.json"
+unlink "$ED_DIR/EDMCModernOverlay/overlay_client/.venv"
+ln -sv "$HOME/.local/bin/Python/" "$ED_DIR/EDMCModernOverlay/overlay_client/.venv"
+cp -v "./scripts/install_linux.sh" "$ED_DIR/install_linux.sh"
+cp -v "./scripts/install_matrix.json" "$ED_DIR/install_matrix.json"
+popd || exit
+
+mkdir -p "$EDMC_DATA_DIR"
+pushd "$EDMC_DATA_DIR" || exit
+pyenv install --skip-existing "$(cat "${EDMC_DIR}/.python-version")"
+pyenv local "$(cat "${EDMC_DIR}/.python-version")"
 eval "$(pyenv init - zsh)"
-python3 -m venv Python
+python3 -m venv "$HOME/.local/bin/Python"
 # shellcheck disable=SC3046
 # shellcheck disable=SC3051
 # shellcheck disable=SC1091
-source "$EDMC_DATA_DIR/Python/bin/activate"
+source "$HOME/.local/bin/Python/bin/activate"
+popd || exit
 
-if [[ -n "${JMN_UPDATE+x}" ]]; then
-	python3 -m pip install pip
-	python3 -m pip install --upgrade pip
-	python3 -m pip install playsound3
-	python3 -m pip install --upgrade playsound3
-	python3 -m pip install tcl
-	python3 -m pip install --upgrade tcl
-	python3 -m pip install tk
-	python3 -m pip install --upgrade tk
-	python3 -m pip install -r "$EDMC_PLUGINS/EDMCModernOverlay/overlay_client/requirements/base.txt"
-	python3 -m pip install -r "$EDMC_PLUGINS/EDMCModernOverlay/overlay_client/requirements/wayland.txt"
-	REQUIREMENTS_FILES="$(find "$EDMC_PLUGINS" "$ED_DIR" -type f -name "*requirements.txt")"
-	for F in $REQUIREMENTS_FILES
-	do
-		python3 -m pip install -r "$F"
-	done
-	chmod +x -R "$EDMC_PLUGINS"
-	chmod +x -R "$ED_DIR"
-fi
+python3 -m pip install pip
+python3 -m pip install --upgrade pip
+python3 -m pip install playsound3
+python3 -m pip install --upgrade playsound3
+python3 -m pip install tcl
+python3 -m pip install --upgrade tcl
+python3 -m pip install tk
+python3 -m pip install --upgrade tk
+python3 -m pip install -r "$ED_DIR/EDMCModernOverlay/overlay_client/requirements/base.txt"
+python3 -m pip install --upgrade -r "$ED_DIR/EDMCModernOverlay/overlay_client/requirements/base.txt"
+python3 -m pip install -r "$ED_DIR/EDMCModernOverlay/overlay_client/requirements/wayland.txt"
+python3 -m pip install --upgrade -r "$ED_DIR/EDMCModernOverlay/overlay_client/requirements/wayland.txt"
+python3 -m pip install -r "$ED_DIR/EDMCModernOverlay/requirements/dev.txt"
+python3 -m pip install --upgrade -r "$ED_DIR/EDMCModernOverlay/requirements/dev.txt"
+REQUIREMENTS_FILES="$(find "$EDMC_PLUGINS" "$ED_DIR" -type f -name "*requirements.txt")"
+for F in $REQUIREMENTS_FILES
+do
+	python3 -m pip install -r "$F"
+	python3 -m pip install --upgrade -r "$F"
+done
+
+pushd "$ED_DIR" || exit
+"./install_linux.sh" --assume-yes --profile arch
+popd || exit
+
+
+chmod +x -R "$EDMC_PLUGINS"
+chmod +x -R "$ED_DIR"
 
 pushd "$EDMC_DIR" || exit
 python3 EDMarketConnector.py
-
-
-
-
+popd || exit

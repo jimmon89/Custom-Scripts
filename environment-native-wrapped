@@ -226,13 +226,6 @@ if [[ "$JMN_SURROUND" = "1" ]] || [[ "$JMN_SURROUND" = "true" ]] || [[ "$JMN_SUR
 		export WINEDLLOVERRIDES="${WINEDLLOVERRIDES};winepulse.drv=d"
 	fi
 	export WINEALSA_CHANNELS="6"
-elif ! [[ "$JMN_SURROUND" = "1" ]] && ! [[ "$JMN_SURROUND" = "true" ]] && ! [[ "$JMN_SURROUND" = "yes" ]]; then
-	if [[ -z "${WINEDLLOVERRIDES+x}" ]]; then
-		export WINEDLLOVERRIDES="winepulse.drv=d"
-	elif [[ -n "${WINEDLLOVERRIDES+x}" ]]; then
-		export WINEDLLOVERRIDES="${WINEDLLOVERRIDES};winepulse.drv=d"
-	fi
-	export WINEALSA_CHANNELS="2"
 fi
 if [[ -z "${JMN_SURROUND_FIX+x}" ]]; then
 	export JMN_SURROUND_FIX="0"

@@ -22,4 +22,4 @@ chmod -R ug+x "${1}"
 # shellcheck disable=SC2164
 # shellcheck disable=SC3044
 popd
-echo -e "\e[0;92;1mDone\e[0m"
+echo -e "\e[0;92;1mDone\e[0m" && sleep 5
