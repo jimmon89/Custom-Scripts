@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-cd "/home/jimmy/Documents/qbittorrent/" || exit
+cd "$HOME/Documents/qbittorrent/" || exit
 curl -O http://upd.emule-security.org/ipfilter.zip
 unzip ./ipfilter.zip
 rm ./ipfilter.zip

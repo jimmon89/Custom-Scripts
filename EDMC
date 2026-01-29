@@ -4,9 +4,9 @@
 LD_PRELOAD=""
 ED_DIR="$HOME/Repos/Elite-Dangerous"
 # shellcheck disable=SC2154
-EDMC_PLUGINS="$XDG_DATA_HOME/EDMarketConnector/plugins"
+EDMC_PLUGINS="${XDG_DATA_HOME:-$HOME/.local/share}/EDMarketConnector/plugins"
 EDMC_DIR="$ED_DIR/EDMarketConnector"
-EDMC_DATA_DIR="$XDG_DATA_HOME/EDMarketConnector"
+EDMC_DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/EDMarketConnector"
 TMPDIR="${EDMC_DIR}/tmp"
 
 mkdir -p "${TMPDIR}"
@@ -42,8 +42,10 @@ mkdir -p "$EDMC_DATA_DIR"
 pushd "$EDMC_DATA_DIR" || exit
 pyenv install --skip-existing "$(cat "${EDMC_DIR}/.python-version")"
 pyenv local "$(cat "${EDMC_DIR}/.python-version")"
+
 eval "$(pyenv init - zsh)"
 python3 -m venv "$HOME/.local/bin/Python"
+
 # shellcheck disable=SC3046
 # shellcheck disable=SC3051
 # shellcheck disable=SC1091
@@ -64,6 +66,7 @@ python3 -m pip install -r "$ED_DIR/EDMCModernOverlay/overlay_client/requirements
 python3 -m pip install --upgrade -r "$ED_DIR/EDMCModernOverlay/overlay_client/requirements/wayland.txt"
 python3 -m pip install -r "$ED_DIR/EDMCModernOverlay/requirements/dev.txt"
 python3 -m pip install --upgrade -r "$ED_DIR/EDMCModernOverlay/requirements/dev.txt"
+sed 's/from playsound import playsound/from playsound3 import playsound/g' "$EDMC_PLUGINS/EDR/audiofeedback.py"
 REQUIREMENTS_FILES="$(find "$EDMC_PLUGINS" "$ED_DIR" -type f -name "*requirements.txt")"
 for F in $REQUIREMENTS_FILES
 do

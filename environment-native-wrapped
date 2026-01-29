@@ -28,7 +28,7 @@ fi
 if [[ "$JMN_LOCAL_PROTON" = "1" ]] || [[ "$JMN_LOCAL_PROTON" = "true" ]] || [[ "$JMN_LOCAL_PROTON" = "yes" ]]; then
 	PROTON_VERSION="$(< "${STEAM_COMPAT_DATA_PATH}/version" sed -n 1p)"
 	export PROTON_VERSION
-	export PROTONCOMPATPATH="$HOME/.local/share/Steam/compatibilitytools.d/$PROTON_VERSION"
+	export PROTONCOMPATPATH="${XDG_DATA_HOME:-$HOME/.local/share}/Steam/compatibilitytools.d/$PROTON_VERSION"
 fi
 if [[ -z "${PROTONPATH+x}" ]]; then
 	export PROTONPATH="$PROTONCOMPATPATH"
@@ -486,9 +486,6 @@ if [[ -z "${VKD3D_SHADER_DEBUG+x}" ]]; then
 fi
 if [[ -z "${DXVK_NVAPI_ALLOW_OTHER_DRIVERS+x}" ]]; then
 	export DXVK_NVAPI_ALLOW_OTHER_DRIVERS="1"
-fi
-if [[ -z "${DXVK_NVAPI_DRIVER_VERSION+x}" ]]; then
-	export DXVK_NVAPI_DRIVER_VERSION="47141"
 fi
 if [[ -z "${DXVK_NVAPI_LOG_LEVEL+x}" ]]; then
 	export DXVK_NVAPI_LOG_LEVEL="none"

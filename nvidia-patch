@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-HOME_DIR="/home/jimmy"
-SCRIPT_DIR=$HOME_DIR/Repos/Misc/nvidia-patch
+SCRIPT_DIR=$HOME/Repos/Misc/nvidia-patch
 SCRIPT_PATH="$SCRIPT_DIR/patch"
-CACHE_DIR="$HOME_DIR/.cache/nvidia-patch"
+CACHE_DIR="$HOME/.cache/nvidia-patch"
 LOG_PATH="$CACHE_DIR/output.log"
 export backup_path="$CACHE_DIR/backups"
 

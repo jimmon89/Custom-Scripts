@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
-umo sync total-overhaul
-umo install total-overhaul
-momw-configurator-linux-amd64 config total-overhaul --run-navmeshtool --run-validator --verbose
+JMN_PACK="total-overhaul"
+cd "${XDG_DATA_HOME:-$HOME/.local/share}/applications" || exit
+[[ -e './umo.desktop.disabled' ]] && mv -v './umo.desktop.disabled' './umo.desktop'
+umo install --sync "custom"
+umo install --sync "$JMN_PACK"
+momw-configurator-linux-amd64 config "$JMN_PACK" --run-navmeshtool --run-validator
+[[ -e './umo.desktop' ]] && mv -v './umo.desktop' './umo.desktop.disabled'

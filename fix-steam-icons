@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 shopt -s nullglob
 
-STEAM_ASSET_PATH="$HOME/.local/share/Steam/appcache/librarycache/"
+STEAM_ASSET_PATH="${XDG_DATA_HOME:-$HOME/.local/share}/Steam/appcache/librarycache/"
 TMPFILE_PATH="/tmp/IMAGES_TO_MODIFY/"
 DESKTOP_FILE_LOCATION="$HOME/Desktop/"
-APPLICATION_FILE_LOCATION="$HOME/.local/share/applications/"
-ICON_PATH="$HOME/.local/share/icons/"
+APPLICATION_FILE_LOCATION="${XDG_DATA_HOME:-$HOME/.local/share}/applications/"
+ICON_PATH="${XDG_DATA_HOME:-$HOME/.local/share}/icons/"
 HELP_ARGUMENT="help"
 OVERWRITE_ARGUEMENT="overwrite"
 DOWNLOAD_ARGUMENT="download"
