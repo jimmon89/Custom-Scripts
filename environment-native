@@ -1,113 +1,20 @@
 #!/usr/bin/env bash
 export LD_PRELOAD_TMP="$LD_PRELOAD"
 export LD_PRELOAD=""
-if [[ -z "${SteamAppId+x}" ]]; then
-	if [[ -n "${APPID+x}" ]]; then
-		export SteamAppId="$APPID"
-	elif [[ -z "${APPID+x}" ]]; then
-		JMN_CURRENT_DIR="$(pwd)"
-		SteamAppId="${JMN_CURRENT_DIR##*/}"
-		export SteamAppId
+if [[ -z "${DATA_DIR_NAME+x}" ]]; then
+	if [[ -f "$(which "${1}" 2>/dev/null)" ]]; then
+		DATA_DIR_NAME="$(basename "$(which "${1}" 2>/dev/null)")"
+		export DATA_DIR_NAME
+	else
+		export DATA_DIR_NAME="default"
 	fi
 fi
-if [[ -z "${APPID+x}" ]]; then
-	if [[ -n "${SteamAppId+x}" ]]; then
-		export APPID="$SteamAppId"
-	fi
-fi
-if [[ -z "${PROTON_DEBUG_DIR+x}" ]]; then
-	export PROTON_DEBUG_DIR="$HOME/Games/__Apps__/Native-Cache"
-fi
-if [[ -z "${STEAM_COMPAT_DATA_PATH+x}" ]]; then
-	if [[ -n "${WINEPREFIX+x}" ]]; then
-		export STEAM_COMPAT_DATA_PATH="$WINEPREFIX"
-	elif [[ -z "${WINEPREFIX+x}" ]]; then
-		STEAM_COMPAT_DATA_PATH="$(pwd)"
-		export STEAM_COMPAT_DATA_PATH
-	fi
-fi
-if [[ -z "${WINEPREFIX+x}" ]]; then
-	export WINEPREFIX="$STEAM_COMPAT_DATA_PATH"
-fi
-if [[ -z "${STEAM_COMPAT_INSTALL_PATH+x}" ]]; then
-	export STEAM_COMPAT_INSTALL_PATH="$STEAM_COMPAT_DATA_PATH"
-fi
-if [[ -z "${INSTALL_BASE+x}" ]]; then
-	INSTALL_BASE="${STEAM_COMPAT_INSTALL_PATH##*/}"
-	export INSTALL_BASE
-	echo "INSTALL_BASE: $INSTALL_BASE"
-fi
-if [[ -d "${PROTON_DEBUG_DIR}" ]]; then
-	if [[ -z "${LOG_DIR+x}" ]]; then
-		export LOG_DIR="$PROTON_DEBUG_DIR/logs/$INSTALL_BASE"
-	fi	
-	if [[ -z "${PROTONLOGPATH+x}" ]]; then
-		export PROTONLOGPATH="$PROTON_DEBUG_DIR/logs/$INSTALL_BASE"
-	fi
-fi
-if [[ -z "${SCRIPT_DIR+x}" ]]; then
-	export SCRIPT_DIR="$HOME/Games/wine"
-fi
-if ! [[ -d "${STEAM_COMPAT_DATA_PATH}" ]]; then
-	if [[ -e "${STEAM_COMPAT_DATA_PATH}" ]]; then
-		rm -rfv "$STEAM_COMPAT_DATA_PATH"
-	fi
-	echo STEAM_COMPAT_DATA_PATH
-	mkdir -pv "$STEAM_COMPAT_DATA_PATH"
-fi
-if ! [[ -d "${WINEPREFIX}" ]]; then
-	if [[ -e "${WINEPREFIX}" ]]; then
-		rm -rfv "$WINEPREFIX"
-	fi
-	echo WINEPREFIX
-	mkdir -pv "$WINEPREFIX"
-fi
-if ! [[ -d "${SCRIPT_DIR}" ]]; then
-	if [[ -e "${SCRIPT_DIR}" ]]; then
-		rm -rfv "$SCRIPT_DIR"
-	fi
-	echo SCRIPT_DIR
-	mkdir -pv "$SCRIPT_DIR"
-fi
-if ! [[ -d "${PROTON_DEBUG_DIR}" ]]; then
-	if [[ -e "${PROTON_DEBUG_DIR}" ]]; then
-		rm -rfv "$PROTON_DEBUG_DIR"
-	fi
-	echo PROTON_DEBUG_DIR
-	mkdir -pv "$PROTON_DEBUG_DIR"
-fi
-if ! [[ -d "${LOG_DIR}" ]]; then
-	if [[ -e "${LOG_DIR}" ]]; then
-		rm -rfv "$LOG_DIR"
-	fi
-	echo LOG_DIR
-	mkdir -pv "$LOG_DIR"
-fi
-if ! [[ -d "${PROTONLOGPATH}" ]]; then
-	if [[ -e "${PROTONLOGPATH}" ]]; then
-		rm -rfv "$PROTONLOGPATH"
-	fi
-	echo PROTONLOGPATH
-	mkdir -pv "$PROTONLOGPATH"
-fi
-if [[ -z "${JMN_WATCH_LOG+x}" ]]; then
-	export JMN_WATCH_LOG="0"
-fi
+source environment-native-general
+[[ -n "${LOG_DIR}" ]] && jmn_function_create_directory "${LOG_DIR}"
 touch "$LOG_DIR/prep.log"
 truncate -s 0 "$LOG_DIR/prep.log"
-if [[ "$JMN_WATCH_LOG" = "1" ]] || [[ "$JMN_WATCH_LOG" = "true" ]] || [[ "$JMN_WATCH_LOG" = "yes" ]]; then
-	{
-		echo "Watching log file at \"$LOG_DIR/prep.log\""
-		echo "Press [CTRL+C] to stop."
-		echo ""
-	 } >> "$LOG_DIR/prep.log"
-	alacritty --title "Game Output" --command tail --silent --follow=name --lines=+1 "$LOG_DIR/prep.log" &
-fi
+jmn_full_setup &>> "$LOG_DIR/prep.log"
+echo "${JMN_EXEC[@]}" &>> "$LOG_DIR/prep.log"
 export LD_PRELOAD="$LD_PRELOAD_TMP"
-environment-native-wrapped "${@:-${@}}" &> "$LOG_DIR/prep.log"
-sed -i "/ERROR. ld\.so. object '.home.jimmy.\.local.share.Steam..*.gameoverlayrenderer\.so' from LD_PRELOAD cannot be preloaded .wrong ELF class. .*.. ignored\./d" "$LOG_DIR/prep.log"
-sed -i "/pid .* .. .*, skipping destruction .fork without exec../d" "$LOG_DIR/prep.log"
-sed -i "/wineserver. using server.side synchronization./d" "$LOG_DIR/prep.log"
-sed -i "/Fossilize WARN. Pipeline library handle .* is not registered./d" "$LOG_DIR/prep.log"
-sed -i "/It has either not been recorded, or it failed to be recorded earlier .which is expected if application uses an extension that is not recognized by Fossilize../d" "$LOG_DIR/prep.log"
+("${JMN_EXEC[@]}") &>> "$LOG_DIR/prep.log"
 environment-unset
