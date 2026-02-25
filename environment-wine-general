@@ -14,6 +14,11 @@ if [[ -z "${SteamAppId+x}" ]]; then
 		export SteamAppId="$JMN_DEFAULT_APPID"
 	fi
 fi
+if [[ -z "${APPID+x}" ]]; then
+	if [[ -n "${SteamAppId+x}" ]]; then
+		export APPID="$SteamAppId"
+	fi
+fi
 if [[ -z "${STEAM_COMPAT_DATA_PATH+x}" ]]; then
 	if [[ -z "${WINEPREFIX+x}" ]] && [[ -n "${JMN_DEFAULT_COMPAT_ROOT+x}" ]]; then
 		export STEAM_COMPAT_DATA_PATH="$HOME/Games/__Userdata__/compatdata/$JMN_DEFAULT_COMPAT_ROOT/$SteamAppId"
@@ -26,6 +31,9 @@ if [[ -z "${STEAM_COMPAT_SHADER_PATH+x}" ]]; then
 		STEAM_COMPAT_SHADER_PATH="$(realpath -q "$STEAM_COMPAT_DATA_PATH/../../shadercache/$SteamAppId")"
 	fi
 	export STEAM_COMPAT_SHADER_PATH
+fi
+if [[ -z ${BASE_STEAM_COMPAT+x} ]]; then
+	BASE_STEAM_COMPAT="$STEAM_COMPAT_DATA_PATH"
 fi
 if [[ "$APPID" == "$JMN_DEFAULT_APPID" ]]; then
 	export UMU_STEAM_GAME_ID="$APPID"

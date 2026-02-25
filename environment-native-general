@@ -92,4 +92,4 @@ fi
 if [[ -z "${VK_ICD_FILENAMES+x}" ]] && [[ -z "${container+x}" ]]; then
 	export VK_ICD_FILENAMES="/usr/share/vulkan/icd.d/nvidia_icd.json"
 fi
-source environment-native-general-functions
+source environment-general-functions
