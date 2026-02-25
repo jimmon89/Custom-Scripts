@@ -46,7 +46,7 @@ if [[ "$JMN_WATCH_LOG" = "1" ]] || [[ "$JMN_WATCH_LOG" = "true" ]] || [[ "$JMN_W
 	 } >> "$LOG_DIR/prep.log"
 	alacritty --title "Game Output" --command tail --silent --follow=name --lines=+1 "$LOG_DIR/prep.log" &
 fi
-export LD_PRELOAD="$LD_PRELOAD_TMP"
 echo "${JMN_EXEC[@]}" &>> "$LOG_DIR/prep.log"
+export LD_PRELOAD="$LD_PRELOAD_TMP"
 ("${JMN_EXEC[@]}") &>> "$LOG_DIR/prep.log"
 environment-unset

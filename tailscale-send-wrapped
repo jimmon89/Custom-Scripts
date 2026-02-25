@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+if [[ -z "${*+x}" ]]; then
+    echo "ERROR: No arguments given."
+    echo "USAGE: tailscale-send <file(s)>"
+fi
+for FILE_TO_SEND in "$@"; do
+    if [[ -z "${FILE_TO_SEND+x}" ]]; then
+        echo "ERROR: No arguments given."
+        echo "USAGE: tailscale-send <file(s)>"
+    elif ! [[ -d "$FILE_TO_SEND" ]] && ! [[ -f "$FILE_TO_SEND" ]]; then
+        echo "ERROR: '$FILE_TO_SEND' is not a valid file or folder, skipping."
+        echo "USAGE: tailscale-send <file(s)>"
+    elif [[ -d "$FILE_TO_SEND" ]]; then
+        # use null-delimited find + read loop to safely handle filenames with spaces/newlines
+        while IFS= read -rd '' SUBFILE_TO_SEND; do
+            tailscale file cp --verbose "$SUBFILE_TO_SEND" jimmy-iphone:
+        done < <(find "$FILE_TO_SEND" -type f -print0)
+    elif [[ -f "$FILE_TO_SEND" ]]; then
+        tailscale file cp --verbose "$FILE_TO_SEND" jimmy-iphone:
+    fi
+done
+echo -e "\e[0;92;1mDone\e[0m"

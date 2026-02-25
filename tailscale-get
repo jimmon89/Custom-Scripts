@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+alacritty --hold --title "tailscale get" --command tailscale-get-wrapped "$@"

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+export LD_PRELOAD_TMP="$LD_PRELOAD"
+export LD_PRELOAD=""
+if [[ -n "${INST_NAME+x}" ]]; then
+	export DATA_DIR_NAME="$INST_NAME"
+fi
+export LD_PRELOAD="$LD_PRELOAD_TMP"
+environment-native "${@:-${@}}"
+environment-unset

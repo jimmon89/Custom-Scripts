@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+LD_PRELOAD=""
+export PY_VERSION="3.11"
+export PYENV_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/self-operating-computer-pyenv"
+export SOC_DIR="$HOME/Repos/Misc/self-operating-computer"
+mkdir -p "$PYENV_DIR"
+cd "$PYENV_DIR" || exit
+pyenv install --skip-existing "$PY_VERSION"
+pyenv local "$PY_VERSION"
+eval "$(pyenv init - zsh)"
+python3 -m venv "$PYENV_DIR"
+source "$PYENV_DIR/bin/activate"
+python3 -m pip install --upgrade pip
+python3 -m pip install --upgrade setuptools
+python3 -m pip install --upgrade self-operating-computer
+do_git_pull_wrapped "$SOC_DIR"
+python3 -m pip install --upgrade setuptools
+#python3 -m pip install -r "$SOC_DIR/requirements-audio.txt"
+python3 -m pip install --upgrade setuptools
+ollama pull llava
+sudo systemctl restart ollama
+operate --voice -m llava
+unset PY_VERSION
+unset PYENV_DIR
+unset SOC_DIR

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+ERROR_MESSAGE_SYNTAX="USAGE: tailscale-get <file or directory>"
+if [[ -z "${1+x}" ]]; then
+    echo "$ERROR_MESSAGE_SYNTAX"
+    exit 1
+elif ! [[ -f "$1" ]] && ! [[ -d "$1" ]]; then
+    echo "$ERROR_MESSAGE_SYNTAX"
+    exit 1
+elif [[ -d "$1" ]]; then
+    echo "$1 is a valid directory, saving there."
+    SAVE_TO_LOCATION="$1"
+elif [[ -f "$1" ]]; then
+    echo "$1 is a file, saving to ${1##*/} instead"
+    SAVE_TO_LOCATION="${1##*/}"
+fi
+if [[ -n "${SAVE_TO_LOCATION+x}" ]]; then
+    tailscale file get --loop --verbose --conflict rename "$SAVE_TO_LOCATION"
+fi
+echo -e "\e[0;92;1mDone\e[0m"

@@ -10,10 +10,10 @@ if [[ -z "${DATA_DIR_NAME+x}" ]]; then
 	fi
 fi
 source environment-native-general
-[[ -n "${LOG_DIR}" ]] && jmn_function_create_directory "${LOG_DIR}"
+[[ -n "${LOG_DIR}" ]] && jmn_native_function_create_directory "${LOG_DIR}"
 touch "$LOG_DIR/prep.log"
 truncate -s 0 "$LOG_DIR/prep.log"
-jmn_full_setup &>> "$LOG_DIR/prep.log"
+jmn_native_full_setup &>> "$LOG_DIR/prep.log"
 echo "${JMN_EXEC[@]}" &>> "$LOG_DIR/prep.log"
 export LD_PRELOAD="$LD_PRELOAD_TMP"
 ("${JMN_EXEC[@]}") &>> "$LOG_DIR/prep.log"

@@ -24,9 +24,6 @@ if [[ -z "${PROTON_DEBUG_DIR+x}" ]]; then
 	export PROTON_DEBUG_DIR="$HOME/Games/__Apps__/Wine-Cache"
 fi
 source environment-wine-general
-export JMN_EXEC_TMP=("${JMN_EXEC[@]}" "$WINE" "${@:-${@}}")
-export JMN_EXEC=("${JMN_EXEC_TMP[@]}")
-unset JMN_EXEC_TMP
 if ! [[ -d "${LOG_DIR}" ]]; then
 	if [[ -e "${LOG_DIR}" ]]; then
 		rm -rfv "$LOG_DIR"
@@ -36,7 +33,7 @@ if ! [[ -d "${LOG_DIR}" ]]; then
 fi
 touch "$LOG_DIR/prep.log"
 truncate -s 0 "$LOG_DIR/prep.log"
-jmn_create_directories &>> "$LOG_DIR/prep.log"
+jmn_wine_create_directories &>> "$LOG_DIR/prep.log"
 if [[ -z "${JMN_WATCH_LOG+x}" ]]; then
 	export JMN_WATCH_LOG="0"
 fi

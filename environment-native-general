@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+if [[ -z "${DATA_DIR_NAME+x}" ]]; then
+    export DATA_DIR_NAME="default"
+fi
+if [[ -z "${BASE_DATA_DIR_REAL+x}" ]]; then
+	export BASE_DATA_DIR_REAL="$HOME/Games/__Userdata__/compatdata/Native"
+fi
+if [[ -z "${BASE_DATA_DIR_BY_NAME+x}" ]]; then
+	export BASE_DATA_DIR_BY_NAME="$HOME/Games/__Userdata__/compatdata/By-Name"
+fi
+if [[ -z "${DATA_DIR_REAL+x}" ]]; then
+	export DATA_DIR_REAL="$BASE_DATA_DIR_REAL/$DATA_DIR_NAME"
+fi
+if [[ -z "${DATA_DIR_BY_NAME+x}" ]]; then
+	export DATA_DIR_BY_NAME="$BASE_DATA_DIR_BY_NAME/$DATA_DIR_NAME"
+fi
+if [[ -z "${CACHE_DIR+x}" ]]; then
+	export CACHE_DIR="$HOME/Games/__Apps__/Native-Cache"
+fi
+if [[ -z "${JMN_LSFG+x}" ]]; then
+	export JMN_LSFG="0"
+fi
+if [[ "$JMN_LSFG" = "1" ]] || [[ "$JMN_LSFG" = "true" ]] || [[ "$JMN_LSFG" = "yes" ]]; then
+	export LSFG_PROCESS="LSFG-VK Injected Game"
+fi
+if [[ -z "${JMN_EXEC+x}" ]]; then
+	if ! [[ -f "$(which gamemoderun 2>/dev/null)" ]] && [[ -f "$(which game-performance 2>/dev/null)" ]]; then
+		export JMN_EXEC=("game-performance" "${@:-${@}}")
+	elif [[ -f "$(which gamemoderun 2>/dev/null)" ]] && [[ -f "$(which game-performance 2>/dev/null)" ]]; then
+		export JMN_EXEC=("game-performance" "${@:-${@}}")
+	elif [[ -f "$(which gamemoderun 2>/dev/null)" ]] && ! [[ -f "$(which game-performance 2>/dev/null)" ]]; then
+		export JMN_EXEC=("gamemoderun" "${@:-${@}}")
+	elif ! [[ -f "$(which gamemoderun 2>/dev/null)" ]] && ! [[ -f "$(which game-performance 2>/dev/null)" ]]; then
+		export JMN_EXEC=("${@:-${@}}")
+	fi
+elif [[ -n "${JMN_EXEC+x}" ]]; then
+	export JMN_EXEC=("${JMN_EXEC[@]}" "${@:-${@}}")
+fi
+if [[ -z "${JMN_MANGOHUD+x}" ]]; then
+	export JMN_MANGOHUD="0"
+fi
+if [[ "$JMN_MANGOHUD" = "1" ]] || [[ "$JMN_MANGOHUD" = "true" ]] || [[ "$JMN_MANGOHUD" = "yes" ]]; then
+	export JMN_EXEC=("mangohud" "${JMN_EXEC[@]}")
+fi
+if [[ -z "${JMN_ZINK+x}" ]]; then
+	export JMN_ZINK="0"
+fi
+if [[ "$JMN_ZINK" = "1" ]] || [[ "$JMN_ZINK" = "true" ]] || [[ "$JMN_ZINK" = "yes" ]]; then
+	export __GLX_VENDOR_LIBRARY_NAME="mesa"
+	export GALLIUM_DRIVER="zink"
+	export MESA_LOADER_DRIVER_OVERRIDE="zink"
+fi
+if [[ -d "${CACHE_DIR}" ]]; then
+	if [[ -z "${LOG_DIR+x}" ]]; then
+		export LOG_DIR="$CACHE_DIR/logs/$DATA_DIR_NAME"
+	fi
+fi
+if [[ -z "${SCRIPT_DIR+x}" ]]; then
+	export SCRIPT_DIR="$HOME/Games/wine"
+fi
+if [[ -z "${SHADER_CACHE_PATH_DIR+x}" ]]; then
+	export SHADER_CACHE_PATH_DIR="$HOME/Games/__Apps__/Shader-Cache/Native/$DATA_DIR_NAME"
+fi
+if [[ -d "${SHADER_CACHE_PATH_DIR}" ]]; then
+	if [[ -z "${__GL_SHADER_DISK_CACHE_PATH+x}" ]]; then
+		export __GL_SHADER_DISK_CACHE_PATH="$SHADER_CACHE_PATH_DIR/nvidiav1"
+	fi
+	if [[ -z "${AMD_VK_PIPELINE_CACHE_PATH+x}" ]]; then
+		export AMD_VK_PIPELINE_CACHE_PATH="$SHADER_CACHE_PATH_DIR/AMDv1"
+	fi
+	if [[ -z "${MESA_GLSL_CACHE_DIR+x}" ]]; then
+		export MESA_GLSL_CACHE_DIR="$SHADER_CACHE_PATH_DIR"
+	fi
+	if [[ -z "${MESA_SHADER_CACHE_DIR+x}" ]]; then
+		export MESA_SHADER_CACHE_DIR="$SHADER_CACHE_PATH_DIR"
+	fi
+fi
+if [[ -z "${__GL_SHADER_DISK_CACHE_SKIP_CLEANUP+x}" ]]; then
+	export __GL_SHADER_DISK_CACHE_SKIP_CLEANUP="1"
+fi
+if [[ -z "${__GL_SHADER_DISK_CACHE+x}" ]]; then
+	export __GL_SHADER_DISK_CACHE="1"
+fi
+if [[ -z "${__GL_THREADED_OPTIMIZATIONS+x}" ]]; then
+	export __GL_THREADED_OPTIMIZATIONS="1"
+fi
+if [[ -z "${RADV_PERFTEST+x}" ]]; then
+	export RADV_PERFTEST="gpl"
+elif [[ -n "${RADV_PERFTEST+x}" ]]; then
+	export RADV_PERFTEST="${RADV_PERFTEST},gpl"
+fi
+if [[ -z "${VK_ICD_FILENAMES+x}" ]] && [[ -z "${container+x}" ]]; then
+	export VK_ICD_FILENAMES="/usr/share/vulkan/icd.d/nvidia_icd.json"
+fi
+source environment-native-general-functions

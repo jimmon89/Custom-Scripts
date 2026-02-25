@@ -1,0 +1,425 @@
+#!/usr/bin/env bash
+
+jmn_wine_get_file_arch_dxvk() {
+	echo "Getting file architecture for \"$1\"..."
+	_W_ob_output="$(od -An -t x1 -j 0x12 -N 1 "${1}" | tr -d "[:space:]")"
+	local _W_ob_output
+	case "${_W_ob_output}" in
+			"3e")			_W_file_arch="x86_64" ;;
+			"03"|"06") _W_file_arch="i386" ;;
+			*)				 _W_file_arch="" ;;
+	esac
+	echo "${_W_file_arch}"
+}
+
+jmn_wine_set_dxvk_environment() {
+	if [[ -z "${dxvk_lib32+x}" ]]; then
+		export dxvk_lib32=${dxvk_lib32:-"x32"}
+	fi
+	if [[ -z "${dxvk_lib64+x}" ]]; then
+		export dxvk_lib64=${dxvk_lib64:-"x64"}
+	fi
+	if [[ -z "${SYSTEM32_PATH+x}" ]]; then
+		SYSTEM32_PATH=$($WINE64 winepath.exe -u 'C:\windows\system32')
+		SYSTEM32_PATH="${SYSTEM32_PATH/$'\r'/}"
+		export SYSTEM32_PATH
+	fi
+	if [[ -z "${SYSTEM32_PATH+x}" ]]; then
+		SYSWOW64_PATH=$($WINE64 winepath.exe -u 'C:\windows\syswow64')
+		SYSWOW64_PATH="${SYSWOW64_PATH/$'\r'/}"
+		export SYSWOW64_PATH
+	fi
+	if [[ -z "${DXVK_PATH+x}" ]]; then
+		export DXVK_PATH="/usr/share/dxvk"
+	fi
+}
+
+jmn_wine_appendwinepath() {
+	case ":$WINEDLLPATH:" in
+		*:"$1":*)
+			;;
+		*)
+			export WINEDLLPATH="${WINEDLLPATH:+$WINEDLLPATH:}$1"
+	esac
+}
+
+jmn_wine_overrideDll_dxvk() {
+	if ! $WINE64 reg add 'HKEY_CURRENT_USER\Software\Wine\DllOverrides' /v "$1" /d native /f; then
+		echo -e "Failed to add override for \"$1\""
+		exit 1
+	fi
+}
+
+jmn_wine_installFile_dxvk() {
+	local dstfile="${1}/${3}.dll"
+	local srcfile="${DXVK_PATH}/${2}/${3}.dll"
+	if ! [[ -f "${srcfile}" ]]; then
+		echo "${srcfile}: File not found. Skipping."
+		return 1
+	fi
+	if [[ -n "$1" ]]; then
+		if [[ -f "${dstfile}" ]] || [[ -h "${dstfile}" ]]; then
+			if ! [[ -f "${dstfile}.old" ]]; then
+				mv -v "${dstfile}" "${dstfile}.old"
+			else
+				rm -v "${dstfile}"
+			fi
+		else
+			touch "${dstfile}.old_none"
+		fi
+		cp -v --reflink=auto "${srcfile}" "${dstfile}"
+	fi
+	return 0
+}
+
+jmn_wine_install_dxvk() {
+	if [[ "$ARCH" == "win32" ]]; then
+		local lib="$dxvk_lib32"
+		local dll="${1}"
+	else
+		local lib="$dxvk_lib64"
+		local dll="${1}"
+	fi
+	if jmn_wine_installFile_dxvk "$SYSTEM32_PATH" "$lib" "$dll"; then
+		jmn_wine_overrideDll_dxvk "$dll"
+	fi
+	if [[ -d "$SYSWOW64_PATH" ]]; then
+		if jmn_wine_installFile_dxvk "$SYSWOW64_PATH" "$dxvk_lib32" "$1"; then
+			jmn_wine_overrideDll_dxvk "$1"
+		fi
+	fi
+}
+
+jmn_wine_fixwineprefix() {
+	if [[ -z "$STEAM_COMPAT_BY_NAME" ]] || [[ -z "$STEAM_COMPAT_DATA_PATH" ]] || [[ -z "$STEAM_COMPAT_BY_NAME_BASE" ]] || [[ -z "$INSTALL_BASE" ]] || [[ -z "$WINEPREFIXDRIVEC" ]] || [[ -z "$STEAM_COMPAT_INSTALL_PATH" ]] || [[ -z "$JMN_DXVK" ]]; then
+		exit 1
+	fi
+	jmn_wine_set_dxvk_environment
+	if [[ -f "${WINEBOOT}" ]]; then
+		"$WINE64" "${WINEBOOT}" -u
+	fi
+	if [[ -e  "${STEAM_COMPAT_BY_NAME}" ]]; then
+		if [[ -L  "${STEAM_COMPAT_BY_NAME}" ]]; then
+			echo "Removing Target Link \"${STEAM_COMPAT_BY_NAME}\""
+			unlink "${STEAM_COMPAT_BY_NAME}"
+			echo ""
+		fi
+		if [[ -d "${STEAM_COMPAT_BY_NAME}" ]]; then
+			echo "Removing Target Directory \"${STEAM_COMPAT_BY_NAME}\""
+			rm -rfv "${STEAM_COMPAT_BY_NAME}"
+			echo ""
+		fi
+	fi
+	if ! [[ -e  "${STEAM_COMPAT_BY_NAME}" ]]; then
+		echo "Creating Link pointing to \"$STEAM_COMPAT_DATA_PATH\" in \"$STEAM_COMPAT_BY_NAME_BASE\" named \"$INSTALL_BASE\""
+		ln -sfv "$STEAM_COMPAT_DATA_PATH" "$STEAM_COMPAT_BY_NAME"
+		echo ""
+	fi
+	if [[ -d "${WINEPREFIXDRIVEC}" ]]; then
+		echo "Fixing Symlinks in \"$WINEPREFIXDRIVEC\""
+		echo ""
+		if [[ -L "$WINEPREFIXDRIVEC/users" ]]; then
+			echo "Removing Target Link \"$WINEPREFIXDRIVEC/users\""
+			unlink "$WINEPREFIXDRIVEC/users"
+			echo ""
+		fi
+		if [[ -L "$WINEPREFIXDRIVEC/windows/temp" ]]; then
+			echo "Removing Target Link \"$WINEPREFIXDRIVEC/windows/temp\""
+			unlink "$WINEPREFIXDRIVEC/windows/temp"
+			echo ""
+		fi
+		if [[ -d "$WINEPREFIXDRIVEC/users" ]]; then
+			if [[ ! -h "$WINEPREFIXDRIVEC/users" ]]; then
+				echo "Removing Target Directory \"$WINEPREFIXDRIVEC/users\""
+				rm -rfd "$WINEPREFIXDRIVEC/users"
+				echo ""
+			fi
+		fi
+		if [[ -d "$WINEPREFIXDRIVEC/windows/temp" ]]; then
+			if [[ ! -h "$WINEPREFIXDRIVEC/windows/temp" ]]; then
+				echo "Removing Target Directory \"$WINEPREFIXDRIVEC/windows/temp\""
+				rm -rfd "$WINEPREFIXDRIVEC/windows/temp"
+				echo ""
+			fi
+		fi
+		if ! [[ -e "$WINEPREFIXDRIVEC/users" ]]; then
+			echo "Creating Link pointing to \"$HOME/Games/__Userdata__/users/\" in \"$WINEPREFIXDRIVEC\" named \"users\""
+			ln -sfv "$HOME/Games/__Userdata__/users/" "$WINEPREFIXDRIVEC/users"
+			echo ""
+		fi
+		if ! [[ -e "$WINEPREFIXDRIVEC/windows/temp" ]]; then
+			echo "Creating Link pointing to \"/tmp/\" in \"$WINEPREFIXDRIVEC/windows\" named \"temp\""
+			ln -sfv "/tmp/" "$WINEPREFIXDRIVEC/windows/temp"
+			echo ""
+		fi
+		echo Printing Current Wine Locations And Settings
+		echo ""
+		if [[ -n "$PROTONCOMPATPATH" ]]; then
+			echo "Proton Path Is \"$PROTONCOMPATPATH\""
+		elif [[ -z "$PROTONCOMPATPATH" ]]; then
+			echo Proton Path Not Found
+		fi
+		if [[ -n "$WINE_PATH" ]]; then
+			echo "Wine Path Is \"$WINE_PATH\""
+		elif [[ -z "$WINE_PATH" ]]; then
+			echo Wine Path Not Found
+		fi
+		if [[ -n "$WINE64" ]]; then
+			echo "Wine64 Executable Is \"$WINE64\""
+		elif [[ -z "$WINE64" ]]; then
+			echo Wine64 Executable Not Found
+		fi
+		if [[ -n "$WINE" ]]; then
+			echo "Wine Executable Is \"$WINE\""
+		elif [[ -z "$WINE" ]]; then
+			echo Wine Executable Not Found
+		fi
+		if [[ -n "$WINELOADER" ]]; then
+			echo "Wine Loader Executable Is \"$WINELOADER\""
+		elif [[ -z "$WINELOADER" ]]; then
+			echo Wine Loader Executable Not Found
+		fi
+		if [[ -n "$WINESERVER" ]]; then
+			echo "Wine Server Executable Is \"$WINESERVER\""
+		elif [[ -z "$WINESERVER" ]]; then
+			echo Wine Server Executable Not Found
+		fi
+		if [[ -n "$WINEBOOT" ]]; then
+			echo "Wine Boot Executable Is \"$WINEBOOT\""
+		elif [[ -z "$WINEBOOT" ]]; then
+			echo Wine Boot Executable Not Found
+		fi
+		if [[ -n "$WINE_VER" ]]; then
+			echo "Wine Version Is \"$WINE_VER\""
+		elif [[ -z "$WINE_VER" ]]; then
+			echo Wine Version Not Found
+		fi
+		if [[ -n "$ARCH" ]]; then
+			echo "Wine Architecture Is \"$ARCH\""
+		elif [[ -z "$ARCH" ]]; then
+			echo Wine Architecture Not Found
+		fi
+		if [[ "$JMN_DXVK" = "1" ]] || [[ "$JMN_DXVK" = "true" ]] || [[ "$JMN_DXVK" = "yes" ]]; then
+			$WINESERVER -w
+			echo Installing DXVK
+			jmn_wine_install_dxvk d3d8
+			jmn_wine_install_dxvk d3d9
+			jmn_wine_install_dxvk d3d10core
+			jmn_wine_install_dxvk d3d11
+			jmn_wine_install_dxvk dxgi
+		fi
+		if [[ -e "$STEAM_COMPAT_INSTALL_PATH/x" ]] && ! [[ -d "$STEAM_COMPAT_INSTALL_PATH/x" ]]; then
+			rm -rfv "$STEAM_COMPAT_INSTALL_PATH/x"
+		fi
+		if [[ -e "$(pwd)/x" ]] && ! [[ -d "$(pwd)/x" ]]; then
+			rm -rfv "$(pwd)/x"
+		fi
+		if [[ -e "${WINEPREFIXDRIVEC}/winestreamproxy" ]] && ! [[ -d "${WINEPREFIXDRIVEC}/winestreamproxy" ]]; then
+			rm -rfv "${WINEPREFIXDRIVEC}/winestreamproxy"
+		fi
+		winetricks mimeassoc=off
+		echo ""
+		echo Installing Wine Stream Proxy
+		echo ""
+		winestreamproxy-install
+	fi
+	if [[ -d "$HOME/.local/lib/discord-rpc-wine/x86_64" ]]; then
+		jmn_wine_appendwinepath "$HOME/.local/lib/discord-rpc-wine/x86_64"
+	fi
+	if [[ -d "$HOME/.local/lib/discord-rpc-wine/i686" ]]; then
+		jmn_wine_appendwinepath "$HOME/.local/lib/discord-rpc-wine/i686"
+	fi
+	if [[ -d "$HOME/.local/lib/discord-rpc-wine/i686" ]] || [[ -d "$HOME/.local/lib/discord-rpc-wine/x86_64" ]]; then
+		if [[ -z "${WINEDLLOVERRIDES+x}" ]]; then
+			export WINEDLLOVERRIDES="discord-rpc=b"
+		elif [[ -n "${WINEDLLOVERRIDES+x}" ]]; then
+			export WINEDLLOVERRIDES="${WINEDLLOVERRIDES};discord-rpc=b"
+		fi
+	fi
+	if [[ -z "${WINEDLLOVERRIDES+x}" ]]; then
+		export WINEDLLOVERRIDES="winemenubuilder.exe=d"
+	elif [[ -n "${WINEDLLOVERRIDES+x}" ]]; then
+		export WINEDLLOVERRIDES="${WINEDLLOVERRIDES};winemenubuilder.exe=d"
+	fi
+	if [[ -z "$SYSWOW64_PATH" ]] && [[ -z "$SYSTEM32_PATH" ]]; then
+		echo "Failed to resolve \"C:\windows\system32\"."
+		exit 1
+	fi
+	if [[ -n "$WINEPREFIX" ]] && ! [[ -f "$WINEPREFIX/system.reg" ]]; then
+		echo "$WINEPREFIX:"' Not a valid wine prefix.'
+		exit 1
+	fi
+}
+
+jmn_wine_create_directories() {
+	if ! [[ -d "${PROTON_DEBUG_DIR}" ]]; then
+		if [[ -e "${PROTON_DEBUG_DIR}" ]]; then
+			rm -rfv "$PROTON_DEBUG_DIR"
+		fi
+		echo PROTON_DEBUG_DIR
+		mkdir -pv "$PROTON_DEBUG_DIR"
+	fi
+	if ! [[ -d "${STEAM_COMPAT_DATA_PATH}" ]]; then
+		if [[ -e "${STEAM_COMPAT_DATA_PATH}" ]]; then
+			rm -rfv "$STEAM_COMPAT_DATA_PATH"
+		fi
+		echo STEAM_COMPAT_DATA_PATH
+		mkdir -pv "$STEAM_COMPAT_DATA_PATH"
+	fi
+	if ! [[ -d "$STEAM_COMPAT_BY_NAME_BASE" ]]; then
+		if [[ -e "$STEAM_COMPAT_BY_NAME_BASE" ]]; then
+			rm -rfv "$STEAM_COMPAT_BY_NAME_BASE"
+		fi
+		echo "$STEAM_COMPAT_BY_NAME_BASE"
+		mkdir -pv "$STEAM_COMPAT_BY_NAME_BASE"
+	fi
+	if ! [[ -d "${SCRIPT_DIR}" ]]; then
+		if [[ -e "${SCRIPT_DIR}" ]]; then
+			rm -rfv "$SCRIPT_DIR"
+		fi
+		echo SCRIPT_DIR
+		mkdir -pv "$SCRIPT_DIR"
+	fi
+	if ! [[ -d "${LOG_DIR}" ]]; then
+		if [[ -e "${LOG_DIR}" ]]; then
+			rm -rfv "$LOG_DIR"
+		fi
+		echo LOG_DIR
+		mkdir -pv "$LOG_DIR"
+	fi
+	if ! [[ -d "${PROTONLOGPATH}" ]]; then
+		if [[ -e "${PROTONLOGPATH}" ]]; then
+			rm -rfv "$PROTONLOGPATH"
+		fi
+		echo PROTONLOGPATH
+		mkdir -pv "$PROTONLOGPATH"
+	fi
+	if ! [[ -d "${WINEPREFIX}" ]]; then
+		if [[ -e "${WINEPREFIX}" ]]; then
+			rm -rfv "$WINEPREFIX"
+		fi
+		echo WINEPREFIX
+		mkdir -pv "$WINEPREFIX"
+	fi
+	if [[ -z "${STEAM_COMPAT_SHADER_PATH+x}" ]]; then
+		if ! [[ -d "${STEAM_COMPAT_SHADER_PATH}" ]]; then
+			if [[ -e "${STEAM_COMPAT_SHADER_PATH}" ]]; then
+				rm -rfv "$STEAM_COMPAT_SHADER_PATH"
+			fi
+			echo STEAM_COMPAT_SHADER_PATH
+			mkdir -pv "$STEAM_COMPAT_SHADER_PATH"
+		fi
+	fi
+	if ! [[ -d "${MESA_SHADER_CACHE_DIR}" ]]; then
+		if [[ -e "${MESA_SHADER_CACHE_DIR}" ]]; then
+			rm -rfv "$MESA_SHADER_CACHE_DIR"
+		fi
+		echo MESA_SHADER_CACHE_DIR
+		mkdir -pv "$MESA_SHADER_CACHE_DIR"
+	fi
+	if ! [[ -d "${MESA_GLSL_CACHE_DIR}" ]]; then
+		if [[ -e "${MESA_GLSL_CACHE_DIR}" ]]; then
+			rm -rfv "$MESA_GLSL_CACHE_DIR"
+		fi
+		echo MESA_GLSL_CACHE_DIR
+		mkdir -pv "$MESA_GLSL_CACHE_DIR"
+	fi
+	if ! [[ -d "${STEAM_COMPAT_SHADER_PATH}" ]]; then
+		if [[ -e "${STEAM_COMPAT_SHADER_PATH}" ]]; then
+			rm -rfv "$STEAM_COMPAT_SHADER_PATH"
+		fi
+		echo STEAM_COMPAT_SHADER_PATH
+		mkdir -pv "$STEAM_COMPAT_SHADER_PATH"
+	fi
+	if ! [[ -d "${AMD_VK_PIPELINE_CACHE_PATH}" ]]; then
+		if [[ -e "${AMD_VK_PIPELINE_CACHE_PATH}" ]]; then
+			rm -rfv "$AMD_VK_PIPELINE_CACHE_PATH"
+		fi
+		echo AMD_VK_PIPELINE_CACHE_PATH
+		mkdir -pv "$AMD_VK_PIPELINE_CACHE_PATH"
+	fi
+	if ! [[ -d "${__GL_SHADER_DISK_CACHE_PATH}" ]]; then
+		if [[ -e "${__GL_SHADER_DISK_CACHE_PATH}" ]]; then
+			rm -rfv "$__GL_SHADER_DISK_CACHE_PATH"
+		fi
+		echo __GL_SHADER_DISK_CACHE_PATH
+		mkdir -pv "$__GL_SHADER_DISK_CACHE_PATH"
+	fi
+	if ! [[ -d "${DXVK_STATE_CACHE_PATH}" ]]; then
+		if [[ -e "${DXVK_STATE_CACHE_PATH}" ]]; then
+			rm -rfv "$DXVK_STATE_CACHE_PATH"
+		fi
+		echo DXVK_STATE_CACHE_PATH
+		mkdir -pv "$DXVK_STATE_CACHE_PATH"
+	fi
+	if ! [[ -d "${DXVK_SHADER_CACHE_PATH}" ]]; then
+		if [[ -e "${DXVK_SHADER_CACHE_PATH}" ]]; then
+			rm -rfv "$DXVK_SHADER_CACHE_PATH"
+		fi
+		echo DXVK_SHADER_CACHE_PATH
+		mkdir -pv "$DXVK_SHADER_CACHE_PATH"
+	fi
+	if ! [[ -d "${VKD3D_SHADER_CACHE_PATH}" ]]; then
+		if [[ -e "${VKD3D_SHADER_CACHE_PATH}" ]]; then
+			rm -rfv "$VKD3D_SHADER_CACHE_PATH"
+		fi
+		echo VKD3D_SHADER_CACHE_PATH
+		mkdir -pv "$VKD3D_SHADER_CACHE_PATH"
+	fi
+	if [[ -e "${STEAM_COMPAT_DATA_PATH}" ]] && [[ -e "${WINEPREFIX}" ]]; then
+		echo "Dumping Full Environment To \"$LOG_DIR/environment.list\""
+		{
+			printenv -0 | sort -f -z | tr '\0' '\n'
+		} > "$LOG_DIR/environment.list"
+		jmn_wine_fixwineprefix
+		cp -fvst "$SCRIPT_DIR" "$LOG_DIR/environment.list" "$LOG_DIR/prep.log"
+	fi
+}
+
+jmn_native_function_create_directory() {
+	if [[ -z "${1+x}" ]]; then
+		echo "jmn_native_function_create_directory requires one argument: directory path to create."
+		return 1
+	fi
+	if [[ -L "${1}" ]]; then
+		unlink "${1}"
+	elif [[ -f "${1}" ]]; then
+		rm -fv "$1"
+	fi
+	if [[ -e "${1}" ]] && ! [[ -d "${1}" ]]; then
+		rm -fv "$1"
+	fi
+	if [[ -d "${1}" ]]; then
+		echo "Directory \"${1}\" already exists."
+		return 0
+	fi
+	echo "$1"
+	mkdir -pv "$1"
+}
+
+jmn_native_create_directories() {
+	[[ -n "${CACHE_DIR}" ]] && jmn_native_function_create_directory "${CACHE_DIR}"
+	[[ -n "${LOG_DIR}" ]] && jmn_native_function_create_directory "${LOG_DIR}"
+	[[ -n "${SCRIPT_DIR}" ]] && jmn_native_function_create_directory "${SCRIPT_DIR}"
+	[[ -n "${BASE_DATA_DIR_REAL}" ]] && jmn_native_function_create_directory "${BASE_DATA_DIR_REAL}"
+	[[ -n "${BASE_DATA_DIR_BY_NAME}" ]] && jmn_native_function_create_directory "${BASE_DATA_DIR_BY_NAME}"
+	[[ -n "${DATA_DIR_REAL}" ]] && jmn_native_function_create_directory "${DATA_DIR_REAL}"
+	[[ -n "${DATA_DIR_BY_NAME}" ]] && jmn_native_function_create_directory "${DATA_DIR_BY_NAME}"
+	[[ -n "${SHADER_CACHE_PATH_DIR}" ]] && jmn_native_function_create_directory "${SHADER_CACHE_PATH_DIR}"
+	[[ -n "${__GL_SHADER_DISK_CACHE_PATH}" ]] && jmn_native_function_create_directory "${__GL_SHADER_DISK_CACHE_PATH}"
+	[[ -n "${AMD_VK_PIPELINE_CACHE_PATH}" ]] && jmn_native_function_create_directory "${AMD_VK_PIPELINE_CACHE_PATH}"
+}
+jmn_native_copy_log_files() {
+	cp -fvst "$SCRIPT_DIR" "$LOG_DIR/environment.list" "$LOG_DIR/prep.log"
+}
+
+jmn_native_dump_environment() {
+	printenv -0 | sort -f -z | tr '\0' '\n'
+}
+
+jmn_native_full_setup() {
+	jmn_native_create_directories
+	echo "Dumping Full Environment To \"$LOG_DIR/environment.list\""
+	jmn_native_dump_environment > "$LOG_DIR/environment.list"
+	jmn_native_copy_log_files
+}
