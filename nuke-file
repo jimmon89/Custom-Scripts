@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+if [[ -f "$1" ]] && ! [[ -L "$1" ]] && ! [[ -d "$1" ]]; then
+    echo "This is not a secure erase tool, this is to stop your system from ever modifying the file again..."
+    echo "Printing File Contents, make quadruple sure this is the correct file..."
+    echo "Press \"Q\" to continue, or \"CTRL+C\" to stop"
+    sudo cat "$1" | less
+    sudo chattr -i "$1"
+    sudo truncate -s 0 "$1"
+    sudo chattr +i "$1"
+    echo "Printing File Contents again to make sure the file is empty..."
+    sudo cat "$1" | less
+    exit 0
+elif [[ -L "$1" ]]; then
+    echo "Running this on links or directories is a bad idea..."
+    echo "$1 is a Link"
+    exit 1
+elif [[ -d "$1" ]]; then
+    echo "Running this on links or directories is a bad idea..."
+    echo "$1 is a Directory"
+    exit 1
+fi
