@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+export DATA_DIR_NAME="Vesktop"
+tailscale down
+environment-native /usr/bin/vesktop "$@"
+tailscale up --advertise-exit-node --accept-routes
