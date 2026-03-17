@@ -1,4 +1,17 @@
 #!/usr/bin/env bash
+
+jmn_wine_get_file_arch_dxvk() {
+	echo "Getting file architecture for \"$1\"..."
+	_W_ob_output="$(od -An -t x1 -j 0x12 -N 1 "${1}" | tr -d "[:space:]")"
+	local _W_ob_output
+	case "${_W_ob_output}" in
+			"3e")			_W_file_arch="x86_64" ;;
+			"03"|"06") _W_file_arch="i386" ;;
+			*)				 _W_file_arch="" ;;
+	esac
+	echo "${_W_file_arch}"
+}
+
 if [[ -z "${PROTON_LOCAL_SHADER_CACHE+x}" ]]; then
 	export PROTON_LOCAL_SHADER_CACHE=1
 fi
@@ -88,8 +101,6 @@ if [[ -d "${PROTONCOMPATPATH}" ]]; then
 		export WINE64="$WINE"
 	fi
 	if [[ -z "$WINEARCH" ]]; then
-		echo "$WINE"
-		echo "$WINE64"
 		WINE_ARCH="$(jmn_wine_get_file_arch_dxvk "$WINE")"
 		export WINE_ARCH
 		WINE64_ARCH="$(jmn_wine_get_file_arch_dxvk "$WINE64")"
@@ -131,7 +142,7 @@ if [[ -d "${PROTONCOMPATPATH}" ]]; then
 			unset WINELOADER
 		fi
 	fi
-	WINE_VER="$($WINESERVER --version | grep Wine)"
+	WINE_VER="$("$WINESERVER" --version | grep Wine)"
 	export WINE_VER
 fi
 if [[ -z "${STEAM_COMPAT_INSTALL_PATH+x}" ]]; then
@@ -154,7 +165,7 @@ if [[ -z "${STEAM_COMPAT_BY_NAME+x}" ]]; then
 	export STEAM_COMPAT_BY_NAME="$STEAM_COMPAT_BY_NAME_BASE/$INSTALL_BASE"
 fi
 if [[ -z "${SDL_VIDEODRIVER+x}" ]]; then
-	export SDL_VIDEODRIVER="windows,wayland,x11"
+	export SDL_VIDEODRIVER="wayland,x11"
 fi
 if [[ -z "${JMN_LSFG+x}" ]]; then
 	export JMN_LSFG="0"
@@ -163,6 +174,18 @@ if [[ "$JMN_LSFG" = "1" ]] || [[ "$JMN_LSFG" = "true" ]] || [[ "$JMN_LSFG" = "ye
 	export LSFGVK_PROFILE="2x FG / 100%"
 elif [[ "$JMN_LSFG" != "1" ]] && [[ "$JMN_LSFG" != "true" ]] && [[ "$JMN_LSFG" != "yes" ]]; then
 	export DISABLE_LSFGVK="1"
+fi
+if [[ -z "${JMN_WAYLAND+x}" ]]; then
+	export JMN_WAYLAND="0"
+fi
+if [[ "$JMN_WAYLAND" = "1" ]] || [[ "$JMN_WAYLAND" = "true" ]] || [[ "$JMN_WAYLAND" = "yes" ]]; then
+	export PROTON_ENABLE_WAYLAND="1"
+fi
+if [[ -z "${JMN_PRIORITY+x}" ]]; then
+	export JMN_PRIORITY="1"
+fi
+if [[ "$JMN_PRIORITY" = "1" ]] || [[ "$JMN_PRIORITY" = "true" ]] || [[ "$JMN_PRIORITY" = "yes" ]]; then
+	export PROTON_PRIORITY_HIGH="1"
 fi
 if [[ -z "${JMN_DXVK+x}" ]]; then
 	export JMN_DXVK="1"
@@ -186,7 +209,7 @@ if [[ -z "${JMN_NOSYNC+x}" ]]; then
 	export JMN_NOSYNC="1"
 fi
 if [[ -z "${JMN_SDL+x}" ]]; then
-	export JMN_SDL="0"
+	export JMN_SDL="1"
 fi
 if [[ -z "${JMN_WEMOD+x}" ]]; then
 	export JMN_WEMOD="0"
@@ -258,7 +281,7 @@ if [[ -z "${JMN_VSYNC+x}" ]]; then
 	export JMN_VSYNC="-1"
 fi
 if [[ -z "${JMN_32+x}" ]]; then
-	export JMN_32="0"
+	export JMN_32="1"
 fi
 if [[ "$JMN_32" = "1" ]] || [[ "$JMN_32" = "true" ]] || [[ "$JMN_32" = "yes" ]]; then
 	export PROTON_USE_WOW64="1"
@@ -277,6 +300,7 @@ elif [[ "$JMN_NONTSYNC" != "1" ]] && [[ "$JMN_NONTSYNC" != "true" ]] && [[ "$JMN
 	export PROTON_NO_NTSYNC="0"
 fi
 if [[ "$JMN_SDL" = "1" ]] || [[ "$JMN_SDL" = "true" ]] || [[ "$JMN_SDL" = "yes" ]]; then
+	export PROTON_USE_SDL="1"
 	export PROTON_PREFER_SDL_INPUT="1"
 	export WINE_PREFER_SDL_INPUT="1"
 fi
@@ -402,6 +426,9 @@ fi
 if [[ -z "${PROTON_FORCE_LARGE_ADDRESS_AWARE+x}" ]]; then
 	export PROTON_FORCE_LARGE_ADDRESS_AWARE="1"
 fi
+if [[ -z "${STAGING_SHARED_MEMORY+x}" ]]; then
+	export STAGING_SHARED_MEMORY="1"
+fi
 if [[ -z "${PROTON_LOG+x}" ]]; then
 	export PROTON_LOG="0"
 fi
@@ -466,6 +493,17 @@ if [[ "$JMN_WEMOD" = "1" ]] || [[ "$JMN_WEMOD" = "true" ]] || [[ "$JMN_WEMOD" = 
    	export JMN_EXEC_TMP=("$WEMOD_DIR/wemod" "${JMN_EXEC[@]}")
    	export JMN_EXEC=("${JMN_EXEC_TMP[@]}")
 	unset JMN_EXEC_TMP
+fi
+
+if [[ -z "${JMN_FGMOD+x}" ]]; then
+	export JMN_FGMOD="0"
+fi
+if [[ -f "${XDG_DATA_HOME:-$HOME/.local/share}/goverlay/fgmod/fgmod" ]]; then
+	if [[ "$JMN_FGMOD" = "1" ]] || [[ "$JMN_FGMOD" = "true" ]] || [[ "$JMN_FGMOD" = "yes" ]]; then
+		export JMN_EXEC_TMP=("${XDG_DATA_HOME:-$HOME/.local/share}/goverlay/fgmod/fgmod" "${JMN_EXEC[@]}")
+	   	export JMN_EXEC=("${JMN_EXEC_TMP[@]}")
+		unset JMN_EXEC_TMP
+	fi
 fi
 if [[ -n "${JMN_NODLSSSWAP+x}" ]] && [[ "$JMN_NODLSSSWAP" != "1" ]] && [[ "$JMN_NODLSSSWAP" != "true" ]] && [[ "$JMN_NODLSSSWAP" != "yes" ]]; then
 	export JMN_EXEC_TMP=("dlss-swapper" "${JMN_EXEC[@]}")

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-export LD_PRELOAD_TMP="$LD_PRELOAD"
-export LD_PRELOAD=""
+if [[ $LD_PRELOAD != "" ]]; then
+	export LD_PRELOAD_TMP="$LD_PRELOAD"
+	export LD_PRELOAD=""
+fi
+
 if [[ -z "${JMN_DEFAULT_APPID+x}" ]]; then
 	export JMN_DEFAULT_APPID="default"
 fi
@@ -11,6 +14,9 @@ if [[ -z "${PROTONCOMPATPATH+x}" ]]; then
 	if [[ -z "${PROTONPATH+x}" ]]; then
 		export PROTONCOMPATPATH="/opt/wine-cachyos"
 	fi
+fi
+if [[ -z "${STEAM_COMPAT_DATA_PATH+x}" ]] && [[ -z "${WINEPREFIX+x}" ]]; then
+	export WINEPREFIX="$HOME/.wine"
 fi
 if [[ -z "${STEAM_COMPAT_DATA_PATH+x}" ]]; then
 	if [[ -n "${WINEPREFIX+x}" ]]; then
@@ -34,8 +40,9 @@ fi
 touch "$LOG_DIR/prep.log"
 truncate -s 0 "$LOG_DIR/prep.log"
 jmn_wine_create_directories &>> "$LOG_DIR/prep.log"
+echo "${JMN_EXEC_STRING[@]}"
 if [[ -z "${JMN_WATCH_LOG+x}" ]]; then
-	export JMN_WATCH_LOG="0"
+	export JMN_WATCH_LOG="1"
 fi
 if [[ "$JMN_WATCH_LOG" = "1" ]] || [[ "$JMN_WATCH_LOG" = "true" ]] || [[ "$JMN_WATCH_LOG" = "yes" ]]; then
 	{
@@ -47,5 +54,5 @@ if [[ "$JMN_WATCH_LOG" = "1" ]] || [[ "$JMN_WATCH_LOG" = "true" ]] || [[ "$JMN_W
 fi
 echo "${JMN_EXEC[@]}" &>> "$LOG_DIR/prep.log"
 export LD_PRELOAD="$LD_PRELOAD_TMP"
-("${JMN_EXEC[@]}") &>> "$LOG_DIR/prep.log"
+"${JMN_EXEC[@]}" &>> "$LOG_DIR/prep.log"
 environment-unset

@@ -20,12 +20,12 @@ jmn_wine_set_dxvk_environment() {
 		export dxvk_lib64=${dxvk_lib64:-"x64"}
 	fi
 	if [[ -z "${SYSTEM32_PATH+x}" ]]; then
-		SYSTEM32_PATH=$($WINE64 winepath.exe -u 'C:\windows\system32')
+		SYSTEM32_PATH=$("$WINE64" winepath.exe -u 'C:\windows\system32')
 		SYSTEM32_PATH="${SYSTEM32_PATH/$'\r'/}"
 		export SYSTEM32_PATH
 	fi
 	if [[ -z "${SYSTEM32_PATH+x}" ]]; then
-		SYSWOW64_PATH=$($WINE64 winepath.exe -u 'C:\windows\syswow64')
+		SYSWOW64_PATH=$("$WINE64" winepath.exe -u 'C:\windows\syswow64')
 		SYSWOW64_PATH="${SYSWOW64_PATH/$'\r'/}"
 		export SYSWOW64_PATH
 	fi
@@ -44,7 +44,7 @@ jmn_wine_appendwinepath() {
 }
 
 jmn_wine_overrideDll_dxvk() {
-	if ! $WINE64 reg add 'HKEY_CURRENT_USER\Software\Wine\DllOverrides' /v "$1" /d native /f; then
+	if ! "$WINE64" reg add 'HKEY_CURRENT_USER\Software\Wine\DllOverrides' /v "$1" /d native,builtin /f; then
 		echo -e "Failed to add override for \"$1\""
 		exit 1
 	fi
@@ -200,7 +200,7 @@ jmn_wine_fixwineprefix() {
 			echo Wine Architecture Not Found
 		fi
 		if [[ "$JMN_DXVK" = "1" ]] || [[ "$JMN_DXVK" = "true" ]] || [[ "$JMN_DXVK" = "yes" ]]; then
-			$WINESERVER -w
+			"$WINESERVER" -w
 			echo Installing DXVK
 			jmn_wine_install_dxvk d3d8
 			jmn_wine_install_dxvk d3d9
@@ -217,7 +217,17 @@ jmn_wine_fixwineprefix() {
 		if [[ -e "${WINEPREFIXDRIVEC}/winestreamproxy" ]] && ! [[ -d "${WINEPREFIXDRIVEC}/winestreamproxy" ]]; then
 			rm -rfv "${WINEPREFIXDRIVEC}/winestreamproxy"
 		fi
-		winetricks mimeassoc=off
+		if [[ -d "${WINEPREFIX}/.no_mimeassoc" ]]; then
+			echo "Removing Target Directory \"${WINEPREFIX}/.no_mimeassoc\""
+			rm -rfv "${WINEPREFIX}/.no_mimeassoc"
+		fi
+		if ! [[ -e "${WINEPREFIX}/.no_mimeassoc" ]]; then
+			echo "Creating File \"${WINEPREFIX}/.no_mimeassoc\" to indicate MIME associations are disabled in the wine prefix"
+			touch "${WINEPREFIX}/.no_mimeassoc"
+			winetricks mimeassoc=off
+		elif [[ -e "${WINEPREFIX}/.no_mimeassoc" ]]; then
+			echo "File \"${WINEPREFIX}/.no_mimeassoc\" already exists, skipping script to disable MIME association."
+		fi
 		echo ""
 		echo Installing Wine Stream Proxy
 		echo ""

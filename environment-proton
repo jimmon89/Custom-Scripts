@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
-export LD_PRELOAD_TMP="$LD_PRELOAD"
-export LD_PRELOAD=""
+if [[ $LD_PRELOAD != "" ]]; then
+	export LD_PRELOAD_TMP="$LD_PRELOAD"
+	export LD_PRELOAD=""
+fi
 if [[ -z "${JMN_DEFAULT_APPID+x}" ]]; then
-    export JMN_DEFAULT_APPID="0"
+	export JMN_DEFAULT_APPID="0"
 fi
 if [[ -z "${JMN_DEFAULT_COMPAT_ROOT+x}" ]]; then
-    export JMN_DEFAULT_COMPAT_ROOT="Steam-Other"
+	export JMN_DEFAULT_COMPAT_ROOT="Steam-Other"
 fi
 if [[ -z "${PROTONCOMPATPATH+x}" ]]; then
 	if [[ -z "${PROTONPATH+x}" ]]; then
-		export PROTONCOMPATPATH="/usr/share/steam/compatibilitytools.d/proton-ge-custom"
+		export PROTONCOMPATPATH="${XDG_DATA_HOME:-$HOME/.local/share}/Steam/compatibilitytools.d/Proton-GE Latest"
 	fi
 fi
 if [[ -z "${STEAM_COMPAT_DATA_PATH+x}" ]]; then
@@ -34,7 +36,8 @@ if ! [[ -d "${LOG_DIR}" ]]; then
 fi
 touch "$LOG_DIR/prep.log"
 truncate -s 0 "$LOG_DIR/prep.log"
-jmn_create_directories &>> "$LOG_DIR/prep.log"
+echo
+jmn_wine_create_directories &>> "$LOG_DIR/prep.log"
 if [[ -z "${JMN_WATCH_LOG+x}" ]]; then
 	export JMN_WATCH_LOG="0"
 fi
